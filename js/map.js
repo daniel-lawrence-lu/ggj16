@@ -191,9 +191,9 @@ Map.tileSize = 64;
 Map.GROUND = 0;
 Map.WALL = 1;
 Map.CONVEYOR_L = 2;
-Map.CONVEYOR_D = 3;
+Map.CONVEYOR_U = 3;
 Map.CONVEYOR_R = 4;
-Map.CONVEYOR_U = 5;
+Map.CONVEYOR_D = 5;
 
 // Rotations: degrees clockwise
 Map.tiles = [

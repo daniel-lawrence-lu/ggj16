@@ -84,19 +84,19 @@ function GameManager() {
           !instance.map.isImpassable(nx - instance.player.width/2, ny - instance.player.height/2)) {
         instance.playerX = nx;
         instance.playerY = ny;
-      } else if (dx != 0 &&
-          !instance.map.isImpassable(nx + dx*instance.player.width/2, instance.playerY + instance.player.height/2 - 2) &&
-          !instance.map.isImpassable(nx + dx*instance.player.width/2, instance.playerY - instance.player.height/2 + 2)) {
+      } else if (nx != instance.playerX &&
+          !instance.map.isImpassable(nx + sign(nx - instance.playerX)*instance.player.width/2, instance.playerY + instance.player.height/2 - 2) &&
+          !instance.map.isImpassable(nx + sign(nx - instance.playerX)*instance.player.width/2, instance.playerY - instance.player.height/2 + 2)) {
         instance.playerX = nx;
-        if (dy != 0) instance.playerY = alignedy;
-      } else if (dy != 0 &&
-          !instance.map.isImpassable(instance.playerX + instance.player.width/2 - 2, ny + dy*instance.player.height/2) &&
-          !instance.map.isImpassable(instance.playerX - instance.player.width/2 + 2, ny + dy*instance.player.height/2)) {
-        if (dx != 0) instance.playerX = alignedx;
+        if (ny != instance.playerY) instance.playerY = alignedy;
+      } else if (ny != instance.playerY &&
+          !instance.map.isImpassable(instance.playerX + instance.player.width/2 - 2, ny + sign(ny - instance.playerY)*instance.player.height/2) &&
+          !instance.map.isImpassable(instance.playerX - instance.player.width/2 + 2, ny + sign(ny - instance.playerY)*instance.player.height/2)) {
+        if (nx != instance.playerX) instance.playerX = alignedx;
         instance.playerY = ny;
       } else {
-        if (dx != 0) instance.playerX = alignedx;
-        if (dy != 0) instance.playerY = alignedy;
+        if (nx != instance.playerX) instance.playerX = alignedx;
+        if (ny != instance.playerY) instance.playerY = alignedy;
       }
       this.updateEnemies();
     } // if (instance.paused)
