@@ -27,4 +27,13 @@ function transitionState(state) {
   }
 }
 
-transitionState(1);
+// preload
+PIXI.loader.add([
+  "../assets/img/ground.png", 
+  "../assets/img/player.png", 
+  "../assets/img/wall.png",
+]).load(start); 
+
+function start() {
+  transitionState(1);
+}

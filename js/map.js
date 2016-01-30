@@ -26,10 +26,10 @@ function Map(map) {
            Map.impassable[this.map[r][c]];
   }
   this.getWidth = function() {
-      return this.map[0].length;
+      return this.map[0].length * Map.tileSize;
   }
   this.getHeight = function() {
-      return this.map.length;
+      return this.map.length * Map.tileSize;
   }
 }
 Map.prototype = Object.create(PIXI.Container.prototype);

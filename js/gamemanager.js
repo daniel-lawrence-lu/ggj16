@@ -56,38 +56,45 @@ function GameManager() {
       var n = Math.sqrt(Math.abs(dx) + Math.abs(dy));
       var nx = instance.playerX + dx/n*instance.playerV*dt;
       var ny = instance.playerY + dy/n*instance.playerV*dt;
+      var alignedx = Math.floor(instance.playerX / Map.tileSize) * Map.tileSize + (instance.playerX / Map.tileSize - Math.floor(instance.playerX / Map.tileSize) < 0.5 ? instance.player.width/2 : Map.tileSize - instance.player.width/2);
+      var alignedy = Math.floor(instance.playerY / Map.tileSize) * Map.tileSize + (instance.playerY / Map.tileSize - Math.floor(instance.playerY / Map.tileSize) < 0.5 ? instance.player.height/2 : Map.tileSize - instance.player.height/2);
 
-      if (!instance.map.isImpassable(nx + dx*instance.player.width/2, ny + dy*instance.player.height/2)) {
+      if (!instance.map.isImpassable(nx + instance.player.width/2, ny + instance.player.height/2) &&
+          !instance.map.isImpassable(nx - instance.player.width/2, ny + instance.player.height/2) &&
+          !instance.map.isImpassable(nx + instance.player.width/2, ny - instance.player.height/2) &&
+          !instance.map.isImpassable(nx - instance.player.width/2, ny - instance.player.height/2)) {
         instance.playerX = nx;
         instance.playerY = ny;
-      } else if (!instance.map.isImpassable(nx + dx*instance.player.width/2, instance.playerY)) {
+      } else if (!instance.map.isImpassable(nx + dx*instance.player.width/2, instance.playerY + instance.player.height/2 - 2) &&
+                 !instance.map.isImpassable(nx + dx*instance.player.width/2, instance.playerY - instance.player.height/2 + 2)) {
         instance.playerX = nx;
-        instance.playerY = Math.floor(instance.playerY / Map.tileSize + (dy > 0)) * Map.tileSize - dy*instance.player.height/2;
-      } else if (!instance.map.isImpassable(instance.playerX, ny + dy*instance.player.height/2)) {
-        instance.playerX = Math.floor(instance.playerX / Map.tileSize + (dx > 0)) * Map.tileSize - dx*instance.player.width/2 + (dx > 0);
+        instance.playerY = alignedy;
+      } else if (!instance.map.isImpassable(instance.playerX + instance.player.width/2 - 2, ny + dy*instance.player.height/2) &&
+                 !instance.map.isImpassable(instance.playerX - instance.player.width/2 + 2, ny + dy*instance.player.height/2)) {
+        instance.playerX = alignedx;
         instance.playerY = ny;
       } else {
-        instance.playerX = Math.floor(instance.playerX / Map.tileSize + (dx > 0)) * Map.tileSize - dx*instance.player.width/2 + (dx > 0);
-        instance.playerY = Math.floor(instance.playerY / Map.tileSize + (dy > 0)) * Map.tileSize - dy*instance.player.height/2;
+        instance.playerX = alignedx;
+        instance.playerY = alignedy;
       }
     }
     
     // offset the view if the player is scrolling to the edge of the map
     var viewOffsetX = 0, viewOffsetY = 0, mapX, mapY;
-    mapX = instance.playerX - instance.player.width/2 - STAGE_WIDTH/2;
-    mapY = instance.playerY - instance.player.height/2 - STAGE_HEIGHT/2;
+    mapX = instance.playerX - STAGE_WIDTH/2;
+    mapY = instance.playerY - STAGE_HEIGHT/2;
 
     if (mapX < 0) {
       viewOffsetX = mapX;
-    } else if (mapX > STAGE_WIDTH) {
-      viewOffsetY = mapX - STAGE_HEIGHT;
+    } else if (mapX + STAGE_WIDTH >= instance.map.getWidth()) {
+      viewOffsetX = mapX + STAGE_WIDTH - instance.map.getWidth();
     }
     mapX -= viewOffsetX;
 
     if (mapY < 0) {
       viewOffsetY = mapY;
-    } else if (mapY > STAGE_HEIGHT) {
-      viewOffsetY = mapY - STAGE_HEIGHT;
+    } else if (mapY + STAGE_HEIGHT >= instance.map.getHeight()) {
+      viewOffsetY = mapY + STAGE_HEIGHT - instance.map.getHeight();
     }
     mapY -= viewOffsetY;
 
@@ -100,9 +107,6 @@ function GameManager() {
     PIXI.ticker.shared.remove(gameLoop, instance);
     instance.removeChildren();
 
-    for (var i in PIXI.utils.TextureCache) {
-      console.log(i);
-    }
     instance.player = PIXI.Sprite.fromImage("../assets/img/player.png");
     instance.player.x = (STAGE_WIDTH - instance.player.width)/2;
     instance.player.y = (STAGE_HEIGHT - instance.player.height)/2;
