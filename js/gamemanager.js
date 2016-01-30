@@ -54,15 +54,15 @@ function GameManager() {
           !instance.map.isImpassable(nx + dx*instance.player.width/2, instance.playerY + instance.player.height/2 - 2) &&
           !instance.map.isImpassable(nx + dx*instance.player.width/2, instance.playerY - instance.player.height/2 + 2)) {
         instance.playerX = nx;
-        instance.playerY = alignedy;
+        if (dy != 0) instance.playerY = alignedy;
       } else if (dy != 0 &&
           !instance.map.isImpassable(instance.playerX + instance.player.width/2 - 2, ny + dy*instance.player.height/2) &&
           !instance.map.isImpassable(instance.playerX - instance.player.width/2 + 2, ny + dy*instance.player.height/2)) {
-        instance.playerX = alignedx;
+        if (dx != 0) instance.playerX = alignedx;
         instance.playerY = ny;
       } else {
-        instance.playerX = alignedx;
-        instance.playerY = alignedy;
+        if (dx != 0) instance.playerX = alignedx;
+        if (dy != 0) instance.playerY = alignedy;
       }
     }
     
