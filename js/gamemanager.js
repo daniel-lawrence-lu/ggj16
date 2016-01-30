@@ -1,4 +1,3 @@
-var LEFT = 37, UP = 38, RIGHT = 39, DOWN = 40;
 function GameManager() {
   PIXI.Container.call(this);
 
@@ -9,16 +8,14 @@ function GameManager() {
   instance.playerV = 5;
   instance.map = {};
   instance.isDown = [];
-  instance.restrictions = [];
 
   window.addEventListener("keydown", function(evt) {
-    if (evt.altKey || evt.metaKey || evt.ctrlKey) return;
     instance.isDown[evt.keyCode] = true;
-    evt.preventDefault();
+    event.preventDefault();
   });
   window.addEventListener("keyup", function(evt) {
     instance.isDown[evt.keyCode] = false;
-    evt.preventDefault();
+    event.preventDefault();
   });
   var isDown = function(keyCode) {
     return keyCode in instance.isDown && instance.isDown[keyCode];
@@ -27,16 +24,16 @@ function GameManager() {
   var gameLoop = function(dt) {
     var dx = 0;
     var dy = 0;
-    if (isDown(LEFT)) {
+    if (isDown(37)) { // left
       dx--;
     }
-    if (isDown(UP)) {
+    if (isDown(38)) { // up
       dy--;
     }
-    if (isDown(RIGHT)) {
+    if (isDown(39)) { // right
       dx++;
     }
-    if (isDown(DOWN)) {
+    if (isDown(40)) { // down
       dy++;
     }
     
@@ -57,15 +54,15 @@ function GameManager() {
           !instance.map.isImpassable(nx + dx*instance.player.width/2, instance.playerY + instance.player.height/2 - 2) &&
           !instance.map.isImpassable(nx + dx*instance.player.width/2, instance.playerY - instance.player.height/2 + 2)) {
         instance.playerX = nx;
-        if (dy != 0) instance.playerY = alignedy;
+        instance.playerY = alignedy;
       } else if (dy != 0 &&
           !instance.map.isImpassable(instance.playerX + instance.player.width/2 - 2, ny + dy*instance.player.height/2) &&
           !instance.map.isImpassable(instance.playerX - instance.player.width/2 + 2, ny + dy*instance.player.height/2)) {
-        if (dx != 0) instance.playerX = alignedx;
+        instance.playerX = alignedx;
         instance.playerY = ny;
       } else {
-        if (dx != 0) instance.playerX = alignedx;
-        if (dy != 0) instance.playerY = alignedy;
+        instance.playerX = alignedx;
+        instance.playerY = alignedy;
       }
     }
     
@@ -92,7 +89,9 @@ function GameManager() {
     instance.player.y = (STAGE_HEIGHT - instance.player.height)/2 + viewOffsetY;
     instance.map.renderViewport(mapX, mapY, 
             STAGE_WIDTH, STAGE_HEIGHT, 
-            instance.player.x + instance.player.width/2, instance.player.y + instance.player.height/2);
+            instance.player.x + instance.player.width/2, instance.player.y + instance.player.height/2,
+            instance.enemies
+            );
   }
 
   this.loadMap = function(map) {
@@ -112,6 +111,8 @@ function GameManager() {
       instance.addChild(instance.map);
       instance.addChild(instance.player);
       PIXI.ticker.shared.add(gameLoop, instance);
+      instance.enemies = data.enemies;
+      console.log(instance.enemies);
     }
     PIXI.loader.add("map", GameManager.maps[map]).load(mapLoaded);
   }
@@ -122,7 +123,4 @@ GameManager.prototype = Object.create(PIXI.Container.prototype);
 GameManager.prototype.constructor = GameManager;
 GameManager.maps = [
   "../assets/maps/tutorial.json"
-];
-GameManager.restrictions = [
-  [[RIGHT, DOWN]]
 ];
