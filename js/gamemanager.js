@@ -12,12 +12,13 @@ function GameManager() {
   instance.state = {};
 
   window.addEventListener("keydown", function(evt) {
+    if (evt.altKey || evt.metaKey || evt.ctrlKey) return
     instance.isDown[evt.keyCode] = true;
-    event.preventDefault();
+    evt.preventDefault();
   });
   window.addEventListener("keyup", function(evt) {
     instance.isDown[evt.keyCode] = false;
-    event.preventDefault();
+    evt.preventDefault();
   });
   var isDown = function(keyCode) {
     return keyCode in instance.isDown && instance.isDown[keyCode];
