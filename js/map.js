@@ -53,6 +53,19 @@ function Map(map) {
       }
     }
 
+    /*
+    for(var i=0; i<obstacleSegments.length; i++) {
+      // draw segments used in visibility polygon calculation
+      var seg = new PIXI.Graphics();
+      seg.beginFill(0xff0000);
+      seg.drawRect(obstacleSegments[i][0][0]-2, obstacleSegments[i][0][1]-2,
+          obstacleSegments[i][1][0] - obstacleSegments[i][0][0]+4,
+          obstacleSegments[i][1][1] - obstacleSegments[i][0][1]+4);
+      seg.endFill();
+      this.addChild(seg);
+    }
+    */
+
     for(var e=0; e<enemies.length; e++) {
       this.drawVisibilityPolygonEnemy(enemies[e], x, y, width, height);
     }
@@ -79,7 +92,7 @@ function Map(map) {
   this.drawVisibilityPolygonEnemy = function(enemy, x, y, width, height) {
     var eX = enemy.x * Map.tileSize - x + Map.tileSize/2, eY = enemy.y * Map.tileSize - y + Map.tileSize/2,
       eT = enemy.theta, eR = enemy.radius, eF = enemy.fov;
-    var x0 = eX - 1 * Math.sin(eT), y0 = eY - 1 * Math.cos(eT);
+    var x0 = eX - 1 * Math.cos(eT), y0 = eY - 1 * Math.sin(eT);
     var obstaclePolygon = [[x0, y0]];
     var wedge = [x0, y0];
     // make view range cone have approximately 20 sides per radian
@@ -87,8 +100,8 @@ function Map(map) {
 
     for (var t = 0; t <= dt; t++) {
       var a1 = eT - eF/2 + eF * t / dt;
-      var x1 = eX + eR * Math.sin(a1),
-        y1 = eY + eR * Math.cos(a1);
+      var x1 = eX + eR * Math.cos(a1),
+        y1 = eY + eR * Math.sin(a1);
       obstaclePolygon.push([x1, y1]);
       wedge.push(x1);
       wedge.push(y1);
