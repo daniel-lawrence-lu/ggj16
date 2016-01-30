@@ -2,6 +2,7 @@ function GameManager() {
   PIXI.Container.call(this);
 
   var instance = this;
+  instance.paused = false;
   instance.player = {};
   instance.playerX = 0;
   instance.playerY = 0;
@@ -22,50 +23,52 @@ function GameManager() {
   }
 
   var gameLoop = function(dt) {
-    var dx = 0;
-    var dy = 0;
-    if (isDown(37)) { // left
-      dx--;
-    }
-    if (isDown(38)) { // up
-      dy--;
-    }
-    if (isDown(39)) { // right
-      dx++;
-    }
-    if (isDown(40)) { // down
-      dy++;
-    }
-    
-    if (dx != 0 || dy != 0) {
-      var n = Math.sqrt(Math.abs(dx) + Math.abs(dy));
-      var nx = instance.playerX + dx/n*instance.playerV*dt;
-      var ny = instance.playerY + dy/n*instance.playerV*dt;
-      var alignedx = Math.floor(instance.playerX / Map.tileSize) * Map.tileSize + (instance.playerX / Map.tileSize - Math.floor(instance.playerX / Map.tileSize) < 0.5 ? instance.player.width/2 : Map.tileSize - instance.player.width/2);
-      var alignedy = Math.floor(instance.playerY / Map.tileSize) * Map.tileSize + (instance.playerY / Map.tileSize - Math.floor(instance.playerY / Map.tileSize) < 0.5 ? instance.player.height/2 : Map.tileSize - instance.player.height/2);
-
-      if (!instance.map.isImpassable(nx + instance.player.width/2, ny + instance.player.height/2) &&
-          !instance.map.isImpassable(nx - instance.player.width/2, ny + instance.player.height/2) &&
-          !instance.map.isImpassable(nx + instance.player.width/2, ny - instance.player.height/2) &&
-          !instance.map.isImpassable(nx - instance.player.width/2, ny - instance.player.height/2)) {
-        instance.playerX = nx;
-        instance.playerY = ny;
-      } else if (dx != 0 &&
-          !instance.map.isImpassable(nx + dx*instance.player.width/2, instance.playerY + instance.player.height/2 - 2) &&
-          !instance.map.isImpassable(nx + dx*instance.player.width/2, instance.playerY - instance.player.height/2 + 2)) {
-        instance.playerX = nx;
-        instance.playerY = alignedy;
-      } else if (dy != 0 &&
-          !instance.map.isImpassable(instance.playerX + instance.player.width/2 - 2, ny + dy*instance.player.height/2) &&
-          !instance.map.isImpassable(instance.playerX - instance.player.width/2 + 2, ny + dy*instance.player.height/2)) {
-        instance.playerX = alignedx;
-        instance.playerY = ny;
-      } else {
-        instance.playerX = alignedx;
-        instance.playerY = alignedy;
+    if (!instance.paused) {
+      var dx = 0;
+      var dy = 0;
+      if (isDown(LEFT)) {
+        dx--;
       }
-    }
-    
+      if (isDown(UP)) {
+        dy--;
+      }
+      if (isDown(RIGHT)) {
+        dx++;
+      }
+      if (isDown(DOWN)) {
+        dy++;
+      }
+      
+      if (dx != 0 || dy != 0) {
+        var n = Math.sqrt(Math.abs(dx) + Math.abs(dy));
+        var nx = instance.playerX + dx/n*instance.playerV*dt;
+        var ny = instance.playerY + dy/n*instance.playerV*dt;
+        var alignedx = Math.floor(instance.playerX / Map.tileSize) * Map.tileSize + (instance.playerX / Map.tileSize - Math.floor(instance.playerX / Map.tileSize) < 0.5 ? instance.player.width/2 : Map.tileSize - instance.player.width/2);
+        var alignedy = Math.floor(instance.playerY / Map.tileSize) * Map.tileSize + (instance.playerY / Map.tileSize - Math.floor(instance.playerY / Map.tileSize) < 0.5 ? instance.player.height/2 : Map.tileSize - instance.player.height/2);
+  
+        if (!instance.map.isImpassable(nx + instance.player.width/2, ny + instance.player.height/2) &&
+            !instance.map.isImpassable(nx - instance.player.width/2, ny + instance.player.height/2) &&
+            !instance.map.isImpassable(nx + instance.player.width/2, ny - instance.player.height/2) &&
+            !instance.map.isImpassable(nx - instance.player.width/2, ny - instance.player.height/2)) {
+          instance.playerX = nx;
+          instance.playerY = ny;
+        } else if (dx != 0 &&
+            !instance.map.isImpassable(nx + dx*instance.player.width/2, instance.playerY + instance.player.height/2 - 2) &&
+            !instance.map.isImpassable(nx + dx*instance.player.width/2, instance.playerY - instance.player.height/2 + 2)) {
+          instance.playerX = nx;
+          if (dy != 0) instance.playerY = alignedy;
+        } else if (dy != 0 &&
+            !instance.map.isImpassable(instance.playerX + instance.player.width/2 - 2, ny + dy*instance.player.height/2) &&
+            !instance.map.isImpassable(instance.playerX - instance.player.width/2 + 2, ny + dy*instance.player.height/2)) {
+          if (dx != 0) instance.playerX = alignedx;
+          instance.playerY = ny;
+        } else {
+          if (dx != 0) instance.playerX = alignedx;
+          if (dy != 0) instance.playerY = alignedy;
+        }
+      }
+    } // if (instance.paused)
+      
     // offset the view if the player is scrolling to the edge of the map
     var viewOffsetX = 0, viewOffsetY = 0, mapX, mapY;
     mapX = instance.playerX - STAGE_WIDTH/2;
@@ -94,6 +97,15 @@ function GameManager() {
             );
   }
 
+  this.resume = function() {
+    instance.paused = false;
+  }
+
+  this.showDialogue = function(dialogue) {
+    instance.paused = true;
+    instance.addChild(Dialogue.showDialogue(dialogue, instance.resume));
+  }
+
   this.loadMap = function(map) {
     PIXI.ticker.shared.remove(gameLoop, instance);
     instance.removeChildren();
@@ -110,9 +122,14 @@ function GameManager() {
 
       instance.addChild(instance.map);
       instance.addChild(instance.player);
+      
+      var ui = new UI();
+      ui.y = STAGE_HEIGHT;
+      instance.addChild(ui);
+     
       PIXI.ticker.shared.add(gameLoop, instance);
       instance.enemies = data.enemies;
-      console.log(instance.enemies);
+      instance.showDialogue("../assets/dialogues/tutorial.json");
     }
     PIXI.loader.add("map", GameManager.maps[map]).load(mapLoaded);
   }
