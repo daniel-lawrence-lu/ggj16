@@ -6,52 +6,37 @@ function GameManager() {
   instance.playerX = 0;
   instance.playerY = 0;
   instance.playerV = 5;
-  instance.dx = 0;
-  instance.dy = 0;
   instance.map = {};
+  instance.isDown = [];
 
   window.addEventListener("keydown", function(evt) {
-    switch(evt.keyCode) {
-      case 37: // left
-        instance.dx--;
-        break;
-      case 38: // up
-        instance.dy--;
-        break;
-      case 39: // right
-        instance.dx++;
-        break;
-      case 40: // down
-        instance.dy++;
-        break;
-    }
-    instance.dx = Math.min(1, Math.max(-1, instance.dx));
-    instance.dy = Math.min(1, Math.max(-1, instance.dy));
+    instance.isDown[evt.keyCode] = true;
     event.preventDefault();
   });
   window.addEventListener("keyup", function(evt) {
-    switch(evt.keyCode) {
-      case 37: // left
-        instance.dx++;
-        break;
-      case 38: // up
-        instance.dy++;
-        break;
-      case 39: // right
-        instance.dx--;
-        break;
-      case 40: // down
-        instance.dy--;
-        break;
-    }
-    instance.dx = Math.min(1, Math.max(-1, instance.dx));
-    instance.dy = Math.min(1, Math.max(-1, instance.dy));
+    instance.isDown[evt.keyCode] = false;
     event.preventDefault();
   });
+  var isDown = function(keyCode) {
+    return keyCode in instance.isDown && instance.isDown[keyCode];
+  }
 
   var gameLoop = function(dt) {
-    var dx = instance.dx;
-    var dy = instance.dy;
+    var dx = 0;
+    var dy = 0;
+    if (isDown(37)) { // left
+      dx--;
+    }
+    if (isDown(38)) { // up
+      dy--;
+    }
+    if (isDown(39)) { // right
+      dx++;
+    }
+    if (isDown(40)) { // down
+      dy++;
+    }
+    
     if (dx != 0 || dy != 0) {
       var n = Math.sqrt(Math.abs(dx) + Math.abs(dy));
       var nx = instance.playerX + dx/n*instance.playerV*dt;
@@ -65,12 +50,14 @@ function GameManager() {
           !instance.map.isImpassable(nx - instance.player.width/2, ny - instance.player.height/2)) {
         instance.playerX = nx;
         instance.playerY = ny;
-      } else if (!instance.map.isImpassable(nx + dx*instance.player.width/2, instance.playerY + instance.player.height/2 - 2) &&
-                 !instance.map.isImpassable(nx + dx*instance.player.width/2, instance.playerY - instance.player.height/2 + 2)) {
+      } else if (dx != 0 &&
+          !instance.map.isImpassable(nx + dx*instance.player.width/2, instance.playerY + instance.player.height/2 - 2) &&
+          !instance.map.isImpassable(nx + dx*instance.player.width/2, instance.playerY - instance.player.height/2 + 2)) {
         instance.playerX = nx;
         instance.playerY = alignedy;
-      } else if (!instance.map.isImpassable(instance.playerX + instance.player.width/2 - 2, ny + dy*instance.player.height/2) &&
-                 !instance.map.isImpassable(instance.playerX - instance.player.width/2 + 2, ny + dy*instance.player.height/2)) {
+      } else if (dy != 0 &&
+          !instance.map.isImpassable(instance.playerX + instance.player.width/2 - 2, ny + dy*instance.player.height/2) &&
+          !instance.map.isImpassable(instance.playerX - instance.player.width/2 + 2, ny + dy*instance.player.height/2)) {
         instance.playerX = alignedx;
         instance.playerY = ny;
       } else {
