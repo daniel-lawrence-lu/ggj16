@@ -17,6 +17,7 @@ function GameManager() {
     evt.preventDefault();
   });
   window.addEventListener("keyup", function(evt) {
+    if (evt.altKey || evt.metaKey || evt.ctrlKey) return;
     instance.isDown[evt.keyCode] = false;
     evt.preventDefault();
   });
