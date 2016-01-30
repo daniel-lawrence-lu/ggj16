@@ -30,13 +30,40 @@ function transitionState(state) {
   }
 }
 
+var loading = new PIXI.Container();
+stage.addChild(loading);
+
+var loadingText = new PIXI.Text("Loading...");
+loadingText.x = 200;
+loadingText.y = 300;
+loading.addChild(loadingText);
+
+var loadingFill = new PIXI.Graphics();
+loadingFill.x = 200;
+loadingFill.y = 340;
+
+var loadingBar = PIXI.Sprite.fromImage("../assets/img/loadingBar.png");
+loadingBar.x = loadingFill.x;
+loadingBar.y = loadingFill.y;
+loading.addChild(loadingBar);
+loading.addChild(loadingFill);
+
 // preload
 PIXI.loader.add([
   "../assets/img/ground.png", 
   "../assets/img/player.png", 
   "../assets/img/wall.png",
-]).load(start); 
+  "../assets/img/start.png",
+]).on('progress', progress).load(ready);
 
-function start() {
+function progress(loader) {
+  console.log(loader.progress);
+  loadingFill.clear();
+  loadingFill.beginFill(0x0000FF);
+  loadingFill.drawRect(0, 0, loadingBar.width * loader.progress / 100, loadingBar.height);
+}
+
+function ready() {
+  stage.removeChild(loading);
   transitionState(0);
 }
