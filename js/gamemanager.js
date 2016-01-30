@@ -1,3 +1,4 @@
+var LEFT = 37, UP = 38, RIGHT = 39, DOWN = 40;
 function GameManager() {
   PIXI.Container.call(this);
 
@@ -8,14 +9,17 @@ function GameManager() {
   instance.playerV = 5;
   instance.map = {};
   instance.isDown = [];
+  instance.restrictions = [];
 
   window.addEventListener("keydown", function(evt) {
+    if (evt.altKey || evt.metaKey || evt.ctrlKey) return;
     instance.isDown[evt.keyCode] = true;
-    event.preventDefault();
+    evt.preventDefault();
   });
   window.addEventListener("keyup", function(evt) {
+    if (evt.altKey || evt.metaKey || evt.ctrlKey) return;
     instance.isDown[evt.keyCode] = false;
-    event.preventDefault();
+    evt.preventDefault();
   });
   var isDown = function(keyCode) {
     return keyCode in instance.isDown && instance.isDown[keyCode];
@@ -24,16 +28,16 @@ function GameManager() {
   var gameLoop = function(dt) {
     var dx = 0;
     var dy = 0;
-    if (isDown(37)) { // left
+    if (isDown(LEFT)) {
       dx--;
     }
-    if (isDown(38)) { // up
+    if (isDown(UP)) {
       dy--;
     }
-    if (isDown(39)) { // right
+    if (isDown(RIGHT)) {
       dx++;
     }
-    if (isDown(40)) { // down
+    if (isDown(DOWN)) {
       dy++;
     }
     
@@ -119,4 +123,7 @@ GameManager.prototype = Object.create(PIXI.Container.prototype);
 GameManager.prototype.constructor = GameManager;
 GameManager.maps = [
   "../assets/maps/tutorial.json"
+];
+GameManager.restrictions = [
+  [[RIGHT, DOWN]]
 ];
