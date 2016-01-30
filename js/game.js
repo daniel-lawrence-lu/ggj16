@@ -38,5 +38,5 @@ PIXI.loader.add([
 ]).load(start); 
 
 function start() {
-  transitionState(1);
+  transitionState(0);
 }

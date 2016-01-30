@@ -10,6 +10,7 @@ function GameManager() {
   instance.playerV = 5;
   instance.map = {};
   instance.isDown = [];
+  instance.state = {};
 
   window.addEventListener("keydown", function(evt) {
     if (evt.altKey || evt.metaKey || evt.ctrlKey) return;
@@ -22,6 +23,16 @@ function GameManager() {
   });
   var isDown = function(keyCode) {
     return keyCode in instance.isDown && instance.isDown[keyCode];
+  }
+
+  var addItem = function(item) {
+    instance.state[item] = true;
+  }
+  var removeItem = function(item) {
+    instance.state[item] = false;
+  }
+  var checkItem = function(item) {
+    return item in instance.state && instance.state[item];
   }
 
   var gameLoop = function(dt) {
