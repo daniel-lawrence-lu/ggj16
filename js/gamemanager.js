@@ -91,9 +91,11 @@ function GameManager() {
     }
     mapY -= viewOffsetY;
 
-    instance.map.renderViewport(mapX, mapY, STAGE_WIDTH, STAGE_HEIGHT);
     instance.player.x = (STAGE_WIDTH - instance.player.width)/2 + viewOffsetX;
     instance.player.y = (STAGE_HEIGHT - instance.player.height)/2 + viewOffsetY;
+    instance.map.renderViewport(mapX, mapY, 
+            STAGE_WIDTH, STAGE_HEIGHT, 
+            instance.player.x + instance.player.width/2, instance.player.y + instance.player.height/2);
   }
 
   this.loadMap = function(map) {
