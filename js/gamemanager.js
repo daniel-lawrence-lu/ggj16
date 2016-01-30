@@ -1,4 +1,3 @@
-var LEFT = 37, UP = 38, RIGHT = 39, DOWN = 40;
 function GameManager() {
   PIXI.Container.call(this);
 
@@ -13,13 +12,12 @@ function GameManager() {
   instance.state = {};
 
   window.addEventListener("keydown", function(evt) {
-    if (evt.altKey || evt.metaKey || evt.ctrlKey) return;
     instance.isDown[evt.keyCode] = true;
-    evt.preventDefault();
+    event.preventDefault();
   });
   window.addEventListener("keyup", function(evt) {
     instance.isDown[evt.keyCode] = false;
-    evt.preventDefault();
+    event.preventDefault();
   });
   var isDown = function(keyCode) {
     return keyCode in instance.isDown && instance.isDown[keyCode];
@@ -105,7 +103,9 @@ function GameManager() {
     instance.player.y = (STAGE_HEIGHT - instance.player.height)/2 + viewOffsetY;
     instance.map.renderViewport(mapX, mapY, 
             STAGE_WIDTH, STAGE_HEIGHT, 
-            instance.player.x + instance.player.width/2, instance.player.y + instance.player.height/2);
+            instance.player.x + instance.player.width/2, instance.player.y + instance.player.height/2,
+            instance.enemies
+            );
   }
 
   this.resume = function() {
@@ -139,6 +139,7 @@ function GameManager() {
       instance.addChild(ui);
      
       PIXI.ticker.shared.add(gameLoop, instance);
+      instance.enemies = data.enemies;
       instance.showDialogue("../assets/dialogues/tutorial.json");
     }
     PIXI.loader.add("map", GameManager.maps[map]).load(mapLoaded);
