@@ -122,6 +122,11 @@ function GameManager() {
 
       instance.addChild(instance.map);
       instance.addChild(instance.player);
+      
+      var ui = new UI();
+      ui.y = STAGE_HEIGHT;
+      instance.addChild(ui);
+     
       PIXI.ticker.shared.add(gameLoop, instance);
       instance.showDialogue("../assets/dialogues/tutorial.json");
     }

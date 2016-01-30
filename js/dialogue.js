@@ -2,7 +2,7 @@ function Dialogue() {
   PIXI.Container.call(this);
 
   var instance = this;
-  instance.text = new PIXI.Text("", {});
+  instance.text = new PIXI.Text("", {fill: 0x0000FF});
   instance.addChild(instance.text);
 
   instance.content = [];
