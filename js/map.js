@@ -124,7 +124,6 @@ function Map(map) {
       }
     }
     obstacleSegments = VisibilityPolygon.breakIntersections(obstacleSegments);
-    console.log(obstacleSegments.length);
     var visibilityPolygonByronFormat = VisibilityPolygon.compute(
         [eX, eY], // viewer position
         obstacleSegments,

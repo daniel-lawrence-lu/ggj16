@@ -1,3 +1,4 @@
+var LEFT = 37, UP = 38, RIGHT = 39, DOWN = 40;
 function GameManager() {
   PIXI.Container.call(this);
 
@@ -105,8 +106,7 @@ function GameManager() {
     instance.map.renderViewport(mapX, mapY, 
             STAGE_WIDTH, STAGE_HEIGHT, 
             instance.player.x + instance.player.width/2, instance.player.y + instance.player.height/2,
-            instance.enemies
-            );
+            instance.enemies);
   }
 
   this.resume = function() {
@@ -127,7 +127,7 @@ function GameManager() {
     instance.player.y = (STAGE_HEIGHT - instance.player.height)/2;
 
     var mapLoaded = function(loader) {
-      var data = loader.resources["map"].data;
+      var data = loader.resources["map" + map].data;
       instance.playerX = data.playerX * Map.tileSize + Map.tileSize / 2;
       instance.playerY = data.playerY * Map.tileSize + Map.tileSize / 2;
       instance.map = new Map(data.map);
@@ -143,7 +143,7 @@ function GameManager() {
       instance.enemies = data.enemies;
       instance.showDialogue("../assets/dialogues/tutorial.json");
     }
-    PIXI.loader.add("map", GameManager.maps[map]).load(mapLoaded);
+    PIXI.loader.add("map" + map, GameManager.maps[map]).load(mapLoaded);
   }
 
   this.loadMap(0);
