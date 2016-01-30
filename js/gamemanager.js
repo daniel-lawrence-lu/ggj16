@@ -5,7 +5,7 @@ function GameManager() {
   instance.player = {};
   instance.playerX = 0;
   instance.playerY = 0;
-  instance.playerV = 10;
+  instance.playerV = 5;
   instance.dx = 0;
   instance.dy = 0;
   instance.map = {};
@@ -71,10 +71,29 @@ function GameManager() {
         instance.playerY = Math.floor(instance.playerY / Map.tileSize + (dy > 0)) * Map.tileSize - dy*instance.player.height/2;
       }
     }
-    instance.map.renderViewport(
-            instance.playerX - instance.player.width/2 - STAGE_WIDTH/2,
-            instance.playerY - instance.player.height/2 - STAGE_HEIGHT/2,
-            STAGE_WIDTH, STAGE_HEIGHT);
+    
+    // offset the view if the player is scrolling to the edge of the map
+    var viewOffsetX = 0, viewOffsetY = 0, mapX, mapY;
+    mapX = instance.playerX - instance.player.width/2 - STAGE_WIDTH/2;
+    mapY = instance.playerY - instance.player.height/2 - STAGE_HEIGHT/2;
+
+    if (mapX < 0) {
+      viewOffsetX = mapX;
+    } else if (mapX > STAGE_WIDTH) {
+      viewOffsetY = mapX - STAGE_HEIGHT;
+    }
+    mapX -= viewOffsetX;
+
+    if (mapY < 0) {
+      viewOffsetY = mapY;
+    } else if (mapY > STAGE_HEIGHT) {
+      viewOffsetY = mapY - STAGE_HEIGHT;
+    }
+    mapY -= viewOffsetY;
+
+    instance.map.renderViewport(mapX, mapY, STAGE_WIDTH, STAGE_HEIGHT);
+    instance.player.x = (STAGE_WIDTH - instance.player.width)/2 + viewOffsetX;
+    instance.player.y = (STAGE_HEIGHT - instance.player.height)/2 + viewOffsetY;
   }
 
   this.loadMap = function(map) {

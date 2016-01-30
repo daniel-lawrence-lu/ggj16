@@ -16,6 +16,7 @@ function transitionState(state) {
     case 0: // main menu
       var menu = new MainMenu();
       // TODO: add start btn or something
+      menu.on("start-game", function() { transitionState(1); });
       stage.addChild(menu);
       break;
     case 1: // game

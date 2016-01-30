@@ -25,11 +25,17 @@ function Map(map) {
     return r < 0 || c < 0 || r >= this.map.length || c >= this.map[0].length ||
            Map.impassable[this.map[r][c]];
   }
+  this.getWidth = function() {
+      return this.map[0].length;
+  }
+  this.getHeight = function() {
+      return this.map.length;
+  }
 }
 Map.prototype = Object.create(PIXI.Container.prototype);
 Map.prototype.constructor = Map;
 
-Map.tileSize = 160;
+Map.tileSize = 50;
 Map.tiles = [
   "../assets/img/ground.png",
   "../assets/img/wall.png",
