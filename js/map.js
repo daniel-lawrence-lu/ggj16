@@ -2,8 +2,13 @@ function Map(map) {
   PIXI.Container.call(this);
 
   this.map = map;
+  this.getTile = function(x, y) {
+    // Assumes x, y in range
+    return this.map[Math.floor(y/Map.tileSize)][Math.floor(x/Map.tileSize)];
+  }
   this.renderViewport = function(x, y, width, height, playerX, playerY, enemies) {
     this.removeChildren();
+    Map.spritePoolIdx = {};
     var obstacleSegments = [];
     for (var r = Math.floor(y/Map.tileSize);
         r < Math.min(this.map.length, Math.floor((y + height)/Map.tileSize)+1);
@@ -12,12 +17,15 @@ function Map(map) {
           c < Math.min(this.map[0].length, Math.floor((x + width)/Map.tileSize)+1);
           c++) {
         var tileX = c * Map.tileSize - x, tileY = r * Map.tileSize - y;
-        var sprite = PIXI.Sprite.fromImage(Map.tiles[this.map[r][c]]);
-        sprite.x = tileX;
-        sprite.y = tileY;
+        
+        var sprite = Map.getSprite(Map.tiles[this.map[r][c]][0]);
+	sprite.x = tileX + Map.tileSize/2;
+        sprite.y = tileY + Map.tileSize/2;
         sprite.width = Map.tileSize;
         sprite.height = Map.tileSize;
+        sprite.rotation = Map.tiles[this.map[r][c]][1] * Math.PI / 180;
         this.addChild(sprite);
+
         if(Map.impassable[this.map[r][c]]) {
           if(playerX <= tileX && !Map.impassable[this.map[r][c-1]]) {
             obstacleSegments.push([
@@ -164,12 +172,83 @@ function Map(map) {
 Map.prototype = Object.create(PIXI.Container.prototype);
 Map.prototype.constructor = Map;
 
-Map.tileSize = 50;
+Map.assetTileSize = 64;
+Map.tileSize = 64;
+
+Map.GROUND = 0;
+Map.WALL = 1;
+Map.CONVEYOR_L = 2;
+Map.CONVEYOR_D = 3;
+Map.CONVEYOR_R = 4;
+Map.CONVEYOR_U = 5;
+
+// Rotations: degrees clockwise
 Map.tiles = [
-  "../assets/img/ground.png",
-  "../assets/img/wall.png",
+  ["../assets/img/ground.png", 0],
+  ["../assets/img/wall.png", 0],
+  ["../assets/img/conveyor.png", 0],
+  ["../assets/img/conveyor.png", 90],
+  ["../assets/img/conveyor.png", 180],
+  ["../assets/img/conveyor.png", 270],
 ];
 Map.impassable = [
   false,
   true,
+  false,
+  false,
+  false,
+  false,
 ];
+
+Map.spritePool = {};
+Map.spritePoolIdx = {};
+
+Map.getSprite = function(sprite) {
+  if (!(sprite in Map.spritePoolIdx)) {
+    Map.spritePoolIdx[sprite] = 0;
+  }
+  return Map.spritePool[sprite][Map.spritePoolIdx[sprite]++];
+}
+
+Map.preload = function(progressCb, doneCb) {
+  var added = {};
+  // Misc assets:
+  PIXI.loader.add([
+    "../assets/img/player.png",
+  ]);
+  for (var i in Map.tiles) {
+    if (!(Map.tiles[i][0] in added)) {
+      PIXI.loader.add(Map.tiles[i][0]);
+      added[Map.tiles[i][0]] = true;
+    }
+  }
+  PIXI.loader.on('progress', progressCb).load(function(loader) {
+    for (var i in loader.resources) {
+      if (i in Map.spritePool) continue;
+      Map.spritePool[i] = [];
+
+      // Assumes texture is 1 row of assetTileSize x assetTileSize tiles.
+      var frames = [];
+      var texture = loader.resources[i].texture;
+      for (var l = 0; l < texture.width; l += Map.assetTileSize) {
+        frames.push(new PIXI.Texture(texture, new PIXI.Rectangle(l, 0, Math.min(texture.width, Map.assetTileSize), Math.min(texture.height, Map.assetTileSize))));
+      }
+
+      var MAX_SPRITES = (Math.ceil(STAGE_WIDTH / Map.tileSize) + 1) * (Math.ceil(STAGE_HEIGHT / Map.tileSize) + 1);
+      for (var j=0; j < MAX_SPRITES; j++) {
+        var sprite;
+        if (frames.length == 1) {
+          sprite = new PIXI.Sprite(frames[0]);
+        } else {
+          sprite = new PIXI.extras.MovieClip(frames);
+          sprite.animationSpeed = 0.2;
+          sprite.play();
+        }
+        sprite.anchor = new PIXI.Point(0.5, 0.5);
+        Map.spritePool[i].push(sprite);
+      }
+    }
+    doneCb();
+  });
+}
+
