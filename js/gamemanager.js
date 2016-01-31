@@ -1,22 +1,33 @@
 var LEFT = 37, UP = 38, RIGHT = 39, DOWN = 40;
+var Z = 90, X = 88, Q = 81;
+var PLAYER_V = 7;
 var ENEMY_OMEGA = 3, ENEMY_V = 0.1;
+var GUN_RECHARGE = 10, BULLET_V = 20;
 function GameManager() {
   PIXI.Container.call(this);
 
   var instance = this;
   instance.paused = false;
-  instance.player = {};
+  instance.player = undefined; 
   instance.playerX = 0;
   instance.playerY = 0;
-  instance.playerV = 7;
-  instance.map = {};
+  instance.facing = 0;
+  instance.gun = undefined;
+  instance.gunX = 0;
+  instance.gunY = 0;
+  instance.hasGun = false;
+  instance.bullets = [];
+  instance.recharge = 0;
+  instance.map = undefined;
   instance.spritesLayer = {};
   instance.isDown = [];
+  instance.newDown = [];
   instance.state = {};
 
   window.addEventListener("keydown", function(evt) {
     if (evt.altKey || evt.metaKey || evt.ctrlKey) return
     instance.isDown[evt.keyCode] = true;
+    instance.newDown[evt.keyCode] = true;
     evt.preventDefault();
   });
   window.addEventListener("keyup", function(evt) {
@@ -25,6 +36,9 @@ function GameManager() {
   });
   var isDown = function(keyCode) {
     return keyCode in instance.isDown && instance.isDown[keyCode];
+  }
+  var newDown = function(keyCode) {
+    return keyCode in instance.newDown && instance.newDown[keyCode];
   }
 
   var addItem = function(item) {
@@ -60,6 +74,16 @@ function GameManager() {
     instance.player = new PIXI.Sprite(SpritePool.getTexture(SpritePool.PLAYER_DOWN));
     instance.player.scale = new PIXI.Point(0.5, 0.5);
     instance.spritesLayer.addChild(instance.player);
+
+    if ("gunX" in data) {
+      instance.gunX = data.gunX * TILE_SIZE + TILE_SIZE / 2;
+      instance.gunY = data.gunY * TILE_SIZE + TILE_SIZE / 2;
+      instance.gun = SpritePool.getSprite(SpritePool.GUN);
+      instance.spritesLayer.addChild(instance.gun);
+      instance.bullets = [];
+    } else {
+      instance.gun = undefined;
+    }
     
     instance.enemies = data.enemies;
     for(var e=0; e<instance.enemies.length; e++) {
@@ -92,6 +116,29 @@ function GameManager() {
     PIXI.ticker.shared.add(gameLoop, instance);
   }
 
+  instance.fireBullet = function(x, y, facing) {
+    var bullet = {};
+    bullet.x = x;
+    bullet.y = y;
+    bullet.sprite = SpritePool.getSprite(SpritePool.BULLET);
+    switch(facing) {
+      case LEFT:
+        bullet.sprite.rotation = 0;
+        break;
+      case DOWN:
+        bullet.sprite.rotation = 90;
+        break;
+      case RIGHT:
+        bullet.sprite.rotation = 180;
+        break;
+      case UP:
+        bullet.sprite.rotation = 270;
+        break;
+    }
+    spriteslayer.addChild(bullet.sprite);
+    instance.bullets.push(bullet);
+  }
+  
   var gameLoop = function() {
     if (instance.paused) return;
 
@@ -113,6 +160,48 @@ function GameManager() {
         break;
     }
 
+    if (instance.gun) {
+      if (!instance.hasGun) {
+        var gx = 0;
+        var gy = 0;
+        switch(instance.map.getTile(instance.gunX, instance.gunY)) {
+          case Map.CONVEYOR_L:
+            gx -= CONVEYOR_SPEED; 
+            break;
+          case Map.CONVEYOR_R:
+            gx += CONVEYOR_SPEED; 
+            break;
+          case Map.CONVEYOR_U:
+            gy -= CONVEYOR_SPEED; 
+            break;
+          case Map.CONVEYOR_D:
+            gy += CONVEYOR_SPEED; 
+            break;
+        }
+        instance.gunX += gx;
+        instance.gunY += gy;
+        if (newDown(Z) && dist2(instance.gunX, instance.gunY, instance.playerX, instance.playerY) < instance.player.width * instance.player.width) {
+          instance.hasGun = true;
+          instance.recharge = 0;
+        }
+      } else {
+        if (instance.recharge > 0) instance.recharge--;
+        if (isDown(X) && instance.recharge == 0) {
+          instance.recharge = GUN_RECHARGE;
+          instance.fireBullet(instance.playerX, instance.playerY, instance.facing);
+        }
+        if (newDown(Z)) {
+          instance.hasGun = false;
+          instance.gunX = instance.playerX;
+          instance.gunY = instance.playerY;
+        }
+      }
+
+      for (var i=instance.bullets.length-1; i >= 0; i--) {
+         
+      }
+    }
+
     var dx = 0;
     var dy = 0;
     if (isDown(LEFT)) {
@@ -129,8 +218,8 @@ function GameManager() {
     }
     
     var n = Math.max(1, Math.sqrt(Math.abs(dx) + Math.abs(dy)));
-    var nx = instance.playerX + dx/n*instance.playerV + ox;
-    var ny = instance.playerY + dy/n*instance.playerV + oy;
+    var nx = instance.playerX + dx/n*PLAYER_V + ox;
+    var ny = instance.playerY + dy/n*PLAYER_V + oy;
     var alignedx = Math.floor(instance.playerX / TILE_SIZE) * TILE_SIZE + (instance.playerX / TILE_SIZE - Math.floor(instance.playerX / TILE_SIZE) < 0.5 ? instance.player.width/2 : TILE_SIZE - instance.player.width/2);
     var alignedy = Math.floor(instance.playerY / TILE_SIZE) * TILE_SIZE + (instance.playerY / TILE_SIZE - Math.floor(instance.playerY / TILE_SIZE) < 0.5 ? instance.player.height/2 : TILE_SIZE - instance.player.height/2);
   
@@ -161,7 +250,7 @@ function GameManager() {
       ee.detected = false;
       if (dx == 0 && dy == 0) continue;
       
-      var eX = ee.x * TILE_SIZE + TILE_SIZE/2, eY = ee.y * TILE_SIZE + TILE_SIZE/2;
+      var eX = ee.x * TILE_SIZE, eY = ee.y * TILE_SIZE;
       var pX = [instance.playerX + instance.player.width/2 - 2, instance.playerX - instance.player.width/2 + 2];
       var pY = [instance.playerY + instance.player.height/2 - 2, instance.playerY - instance.player.height/2 + 2];
       for (var i=0; i < pX.length; i++) for (var j=0; j < pY.length; j++) {
@@ -171,8 +260,8 @@ function GameManager() {
         while(t > Math.PI) t -= 2*Math.PI;
         if (Math.abs(t)*2 > ee.fov_r) continue;
         var blocked = false;
-        for (var x = eX; x <= pX[i]; x += TILE_SIZE) {
-          for (var y = eY; y <= pY[j]; y += TILE_SIZE) {
+        for (var x = Math.min(eX, pX[i]), xx = Math.max(eX, pX[i]); x <= xx; x += TILE_SIZE) {
+          for (var y = Math.min(eY, pY[j]), yy = Math.max(eY, pY[j]); y <= yy; y += TILE_SIZE) {
             var tx = Math.floor(x / TILE_SIZE) * TILE_SIZE, ty = Math.floor(y / TILE_SIZE) * TILE_SIZE;
             if (instance.map.isImpassableAt(x, y) &&
                 (VisibilityPolygon.intersectLines([eX, eY], [pX[i], pY[j]], [tx, ty], [tx, ty+TILE_SIZE]).length != 0 ||
@@ -185,7 +274,8 @@ function GameManager() {
         }
         if (!blocked) ee.detected = true;
       }
-      if (ee.detected) {
+
+      if (ee.detected && !isDown(Q)) {
         instance.paused = true;
         if (instance.state["level"] == 1 && !("hasBeenCaught" in instance.state)) {
           instance.state["hasBeenCaught"] = true;
@@ -216,14 +306,27 @@ function GameManager() {
     mapY -= viewOffsetY;
 
     if (dy > 0) {
+      instance.facing = DOWN;
       instance.player.texture = SpritePool.getTexture(SpritePool.PLAYER_DOWN);
     } else if (dy < 0) {
+      instance.facing = UP;
       instance.player.texture = SpritePool.getTexture(SpritePool.PLAYER_UP);
     } else if (dx != 0) {
+      instance.facing = dx < 0 ? LEFT : RIGHT;
       instance.player.texture = SpritePool.getTexture(SpritePool.PLAYER_SIDE);
     } 
     instance.player.x = (STAGE_WIDTH - instance.player.width)/2 + viewOffsetX;
     instance.player.y = (STAGE_HEIGHT - instance.player.height)/2 + viewOffsetY;
+
+    if (instance.gun) {
+      instance.gun.visible = !instance.hasGun;
+      instance.gun.x = instance.gunX - instance.playerX + instance.player.x;
+      instance.gun.y = instance.gunY - instance.playerY + instance.player.y;
+      for (var i=instance.bullets.length-1; i >= 0; i--) {
+        instance.bullets[i].sprite.x = instance.bullets[i].x - instance.playerX + instance.player.x;
+        instance.bullets[i].sprite.y = instance.bullets[i].y - instance.playerY + instance.player.y;
+      }
+    }
 
     for(var e=0; e<instance.enemies.length; e++) {
       var ee = instance.enemies[e];
@@ -242,6 +345,8 @@ function GameManager() {
     if (instance.state["level"] == 1 && instance.map.getTile(instance.playerX, instance.playerY) == Map.WALK_LICENSE) {
       instance.showDialogue(GameManager.dialogues[2], instance.loadMap.bind(instance, 2));
     }
+
+    instance.newDown = [];
   }
 
   this.resume = function() {

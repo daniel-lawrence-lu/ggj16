@@ -110,7 +110,7 @@ function Map(map) {
     this.addChild(lightPolygon);
   }
   this.drawVisibilityPolygonEnemy = function(enemy, x, y, width, height) {
-    var eX = enemy.x * TILE_SIZE + TILE_SIZE/2 - x, eY = enemy.y * TILE_SIZE + TILE_SIZE/2 - y,
+    var eX = enemy.x * TILE_SIZE - x, eY = enemy.y * TILE_SIZE - y,
       eT = enemy.theta, eR = enemy.radius, eF = enemy.fov_r;
     if(eX < -eR || eY < -eR || eX > width + eR || eY > height + eR) {
       return;
