@@ -1,5 +1,5 @@
 var LEFT = 37, UP = 38, RIGHT = 39, DOWN = 40;
-var ENEMY_OMEGA = 0.1, ENEMY_V = 0.03;
+var ENEMY_OMEGA = 5, ENEMY_V = 0.5;
 function GameManager() {
   PIXI.Container.call(this);
 
@@ -8,7 +8,7 @@ function GameManager() {
   instance.player = {};
   instance.playerX = 0;
   instance.playerY = 0;
-  instance.playerV = 5;
+  instance.playerV = 15;
   instance.map = {};
   instance.isDown = [];
   instance.state = {};
@@ -36,7 +36,7 @@ function GameManager() {
     return item in instance.state && instance.state[item];
   }
 
-  var gameLoop = function(dt) {
+  var gameLoop = function() {
     if (!instance.paused) {
       var ox = 0;
       var oy = 0;
@@ -72,8 +72,8 @@ function GameManager() {
       }
       
       var n = Math.max(1, Math.sqrt(Math.abs(dx) + Math.abs(dy)));
-      var nx = instance.playerX + dx/n*instance.playerV*dt + ox*dt;
-      var ny = instance.playerY + dy/n*instance.playerV*dt + oy*dt;
+      var nx = instance.playerX + dx/n*instance.playerV + ox;
+      var ny = instance.playerY + dy/n*instance.playerV + oy;
       var alignedx = Math.floor(instance.playerX / TILE_SIZE) * TILE_SIZE + (instance.playerX / TILE_SIZE - Math.floor(instance.playerX / TILE_SIZE) < 0.5 ? instance.player.width/2 : TILE_SIZE - instance.player.width/2);
       var alignedy = Math.floor(instance.playerY / TILE_SIZE) * TILE_SIZE + (instance.playerY / TILE_SIZE - Math.floor(instance.playerY / TILE_SIZE) < 0.5 ? instance.player.height/2 : TILE_SIZE - instance.player.height/2);
   
@@ -97,7 +97,7 @@ function GameManager() {
         if (nx != instance.playerX) instance.playerX = alignedx;
         if (ny != instance.playerY) instance.playerY = alignedy;
       }
-      this.updateEnemies(dt);
+      this.updateEnemies();
     } // if (instance.paused)
       
     // offset the view if the player is scrolling to the edge of the map
@@ -119,13 +119,13 @@ function GameManager() {
     }
     mapY -= viewOffsetY;
 
-    if (dx != 0) {
-      instance.player.texture = SpritePool.getTextures(SpritePool.PLAYER_SIDE);
+    if (dy > 0) {
+      instance.player.texture = SpritePool.getTextures(SpritePool.PLAYER_DOWN);
     } else if (dy < 0) {
       instance.player.texture = SpritePool.getTextures(SpritePool.PLAYER_UP);
-    } else if (dx < 0) {
-      instance.player.texture = SpritePool.getTextures(SpritePool.PLAYER_DOWN);
-    }
+    } else if (dx != 0) {
+      instance.player.texture = SpritePool.getTextures(SpritePool.PLAYER_SIDE);
+    } 
     instance.player.x = (STAGE_WIDTH - instance.player.width)/2 + viewOffsetX;
     instance.player.y = (STAGE_HEIGHT - instance.player.height)/2 + viewOffsetY;
     instance.map.renderViewport(mapX, mapY, 
@@ -154,6 +154,7 @@ function GameManager() {
     instance.playerX = data.playerX * TILE_SIZE + TILE_SIZE / 2;
     instance.playerY = data.playerY * TILE_SIZE + TILE_SIZE / 2;
     instance.player = new PIXI.Sprite(SpritePool.getTextures(SpritePool.PLAYER_DOWN));
+    instance.player.scale = new PIXI.Point(0.5, 0.5);
     instance.addChild(instance.player);
     
     var ui = new UI();
@@ -178,7 +179,7 @@ function GameManager() {
       }
       ee.theta = ee.keypoints[0][2] * Math.PI / 180;
       if (!("omega" in ee)) ee.omega = ENEMY_OMEGA;
-      else ee.omega *= Math.PI / 180;
+      ee.omega *= Math.PI / 180;
       if (!("speed" in ee)) ee.speed = ENEMY_V;
       ee.rotating = 0;
     }
@@ -186,7 +187,7 @@ function GameManager() {
     PIXI.ticker.shared.add(gameLoop, instance);
   }
 
-  this.updateEnemies = function(dt) {
+  this.updateEnemies = function() {
     for(var e=0; e<instance.enemies.length; e++) {
       var ee = instance.enemies[e];
       if(ee.rotating === 0) {
@@ -199,22 +200,22 @@ function GameManager() {
         } else {
           var dx = (goal[0] - ee.x)/d,
               dy = (goal[1] - ee.y)/d;
-          ee.x += dx * ee.speed * dt;
-          ee.y += dy * ee.speed * dt;
+          ee.x += dx * ee.speed;
+          ee.y += dy * ee.speed;
         }
       } else {
         // rotate towards target
-        var goal = ee.keypoints[ee.k][2];
+        var goal = ee.keypoints[ee.k][2] * Math.PI / 180;
         var dtheta = goal - ee.theta;
         while(dtheta <= -Math.PI) dtheta += 2*Math.PI;
         while(dtheta > Math.PI) dtheta -= 2*Math.PI;
-        if(Math.abs(dtheta) <= ee.omega * dt) {
+        if(Math.abs(dtheta) <= ee.omega) {
           ee.theta = goal;
           ee.rotating = 0;
         } else if(dtheta < 0) {
-          ee.theta -= ee.omega * dt;
+          ee.theta -= ee.omega;
         } else {
-          ee.theta += ee.omega * dt;
+          ee.theta += ee.omega;
         }
       }
     }

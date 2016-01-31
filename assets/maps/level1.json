@@ -37,7 +37,7 @@
       {
         "radius": 180,
         "fov": 120,
-        "omega": 120,
+        "omega": 40,
         "keypoints": [[2, 21, 0], [2, 21, 120], [2, 21, 240]]
       }, 
       {
@@ -67,43 +67,43 @@
       },
       {
         "radius": 180,
-        "fov": 60,
+        "fov": 90,
         "omega": 0,
         "keypoints": [[13, 7]]
       },
       {
         "radius": 180,
-        "fov": 60,
+        "fov": 90,
         "omega": 0,
         "keypoints": [[15, 9, 180]]
       },
       {
         "radius": 180,
-        "fov": 60,
+        "fov": 90,
         "omega": 0,
         "keypoints": [[13, 11]]
       },
       {
         "radius": 180,
-        "fov": 60,
+        "fov": 90,
         "omega": 0,
         "keypoints": [[15, 13, 180]]
       },
       {
         "radius": 180,
-        "fov": 60,
+        "fov": 90,
         "omega": 0,
         "keypoints": [[13, 15]]
       },
       {
         "radius": 180,
-        "fov": 60,
+        "fov": 90,
         "omega": 0,
         "keypoints": [[15, 17, 180]]
       },
       {
         "radius": 180,
-        "fov": 60,
+        "fov": 90,
         "omega": 0,
         "keypoints": [[13, 19]]
       }
