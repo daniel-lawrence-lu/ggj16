@@ -1,6 +1,5 @@
 <!doctype html>
-<html lang="en">
-<head>
+<html lang="en"> <head>
 <meta charset="utf-8">
 <meta name="description" content="Global Game Jam 2016">
 <meta name="author" content="Scotty">
@@ -73,12 +72,15 @@ html, body {
     left: 0px;
     height: 100px;
     width: 100vw;
-    background: #333;
+    background: #111;
 }
 #lejson {
     font-family: monospace;
     color: #0f0;
-    display: pre-wrap;
+    whitespace: pre-wrap;
+    width: 100vw;
+    height: 100px;
+    background: #111;
 }
 #coord {
     position: fixed;
@@ -98,7 +100,7 @@ html, body {
 <script src="../js/pixi.min.js"></script>
 <script src="../js/utility.js"></script>
 <div id="coord"></div>
-<div id="json"><pre id="lejson">JSON will appear here</pre></div>
+<div id="json"><textarea id="lejson"></textarea></div>
 <div id="toolbar"></div>
 <div id="map"></div>
 <script>
@@ -107,6 +109,7 @@ var types = 6;
 var map = [];
 var lemode = 0;
 var tools = [];
+
 
 for(var i=0; i<types; i++) {
     var zxcv = document.createElement('div');
@@ -146,10 +149,38 @@ for(var i=0; i<100; i++) {
             this.className = this.className.replace('type'+leoldtype, 'type'+letype);
             console.log(this.className);
             map[this.dataset.y][this.dataset.x] = letype;
-            document.getElementById('lejson').innerHTML = JSON.stringify(map);
+            document.getElementById('lejson').value = JSON.stringify(map);
         }
         document.getElementById('map').appendChild(zxcv);
         map[i].push(0);
+    }
+}
+document.getElementById('lejson').onkeyup = function() {
+    document.getElementById('map').innerHTML = '';
+    var map = JSON.parse(document.getElementById('lejson').value);
+    for(var i=0; i<map.length; i++) {
+        for(var j=0; j<map[i].length; j++) {
+            var zxcv = document.createElement('div');
+            zxcv.style.top = i*TILE_SIZE+'px';
+            zxcv.style.left = j*TILE_SIZE+'px';
+            zxcv.className = 'cell type' + map[i][j];
+            zxcv.dataset.x = j;
+            zxcv.dataset.y = i;
+            zxcv.onmouseover = function(evt) {
+                document.getElementById('coord').innerHTML = this.dataset.x + ',' + this.dataset.y;
+            }
+            zxcv.onclick = function(evt) {
+
+                var letype = parseInt(this.className.split(' ')[1][4]);
+                var leoldtype = letype;
+                letype = lemode;
+                this.className = this.className.replace('type'+leoldtype, 'type'+letype);
+                console.log(this.className);
+                map[this.dataset.y][this.dataset.x] = letype;
+                document.getElementById('lejson').value = JSON.stringify(map);
+            }
+            document.getElementById('map').appendChild(zxcv);
+        }
     }
 }
 </script>
