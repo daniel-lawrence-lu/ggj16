@@ -73,6 +73,7 @@ function GameManager() {
     instance.playerY = data.playerY * TILE_SIZE + TILE_SIZE / 2;
     instance.player = new PIXI.Sprite(SpritePool.getTexture(SpritePool.PLAYER_DOWN));
     instance.player.scale = new PIXI.Point(0.5, 0.5);
+    instance.player.anchor = new PIXI.Point(0.5, 0.5);
     instance.spritesLayer.addChild(instance.player);
 
     if ("gunX" in data) {
@@ -85,14 +86,15 @@ function GameManager() {
       instance.gun = undefined;
     }
     
-    instance.enemies = data.enemies;
+    instance.enemies = data.enemies.slice(0);
     for(var e=0; e<instance.enemies.length; e++) {
       var ee = instance.enemies[e];
       ee.sprite = new PIXI.extras.MovieClip(SpritePool.getTextures(SpritePool.ENEMY1_DOWN_STAND));
+      ee.sprite.anchor = new PIXI.Point(0.5, 0.5);
       ee.sprite.play();
       instance.spritesLayer.addChild(ee.sprite);
-      ee.x = ee.keypoints[0][0];
-      ee.y = ee.keypoints[0][1];
+      ee.x = ee.keypoints[0][0] * TILE_SIZE + TILE_SIZE/2;
+      ee.y = ee.keypoints[0][1] * TILE_SIZE + TILE_SIZE/2;
       ee.k = 0; // which keypoint the ee is at
       for(var i=0; i<ee.keypoints.length; i++) {
         if (ee.keypoints[i].length < 3) {
@@ -121,18 +123,27 @@ function GameManager() {
     bullet.x = x;
     bullet.y = y;
     bullet.sprite = SpritePool.getSprite(SpritePool.BULLET);
+    bullet.sprite.anchor = new PIXI.Point(0.5, 0.5);
     switch(facing) {
       case LEFT:
         bullet.sprite.rotation = 0;
+        bullet.dx = -BULLET_V;
+        bullet.dy = 0;
         break;
       case DOWN:
         bullet.sprite.rotation = 90;
+        bullet.dx = 0;
+        bullet.dy = BULLET_V;
         break;
       case RIGHT:
         bullet.sprite.rotation = 180;
+        bullet.dx = BULLET_V;
+        bullet.dy = 0;
         break;
       case UP:
         bullet.sprite.rotation = 270;
+        bullet.dx = 0;
+        bullet.dy = -BULLET_V;
         break;
     }
     spriteslayer.addChild(bullet.sprite);
@@ -198,7 +209,28 @@ function GameManager() {
       }
 
       for (var i=instance.bullets.length-1; i >= 0; i--) {
-         
+        var bullet = instance.bullets[i];
+        bullet.x += bullet.dx;
+        bullet.y += bullet.dy;
+        if (Map.isImpassableAt(bullet.x, bullet.y)) {
+          instance.spritesLayer.removeChild(bullet.sprite);
+          instance.bullets.splice(i, 1);
+        } else {
+          var bb = new PIXI.Rectangle(bullet.x - bullet.sprite.width/2, bullet.y - bullet.sprite.height/2, bullet.sprite.width, bullet.sprite.height);
+          for (var e=instance.enemies.length; e>=0; e--) {
+            var ee = instance.enemies[e];
+            if (bb.contains(ee.x - ee.sprite.width/2, ee.y - ee.sprite.height/2) ||
+                bb.contains(ee.x - ee.sprite.width/2, ee.y + ee.sprite.height/2) ||
+                bb.contains(ee.x + ee.sprite.width/2, ee.y - ee.sprite.height/2) ||
+                bb.contains(ee.x + ee.sprite.width/2, ee.y + ee.sprite.height/2)) {
+              instance.spritesLayer.removeChild(bullet.sprite);
+              instance.bullets.splice(i, 1);
+              instance.spritesLayer.removeChild(ee.sprite);
+              instance.enemies.splice(e, 1);
+              break;
+            }
+          }
+        }
       }
     }
 
@@ -248,26 +280,24 @@ function GameManager() {
     for (var e=0; e<instance.enemies.length; e++) {
       var ee = instance.enemies[e];
       ee.detected = false;
-      if (dx == 0 && dy == 0) continue;
       
-      var eX = ee.x * TILE_SIZE, eY = ee.y * TILE_SIZE;
       var pX = [instance.playerX + instance.player.width/2 - 2, instance.playerX - instance.player.width/2 + 2];
       var pY = [instance.playerY + instance.player.height/2 - 2, instance.playerY - instance.player.height/2 + 2];
       for (var i=0; i < pX.length; i++) for (var j=0; j < pY.length; j++) {
-        if (dist2(eX, eY, pX[i], pY[j]) > ee.radius*ee.radius) continue;
-        var t = Math.atan2(pY[j]-eY, pX[i]-eX) - ee.theta;
+        if (dist2(ee.x, ee.y, pX[i], pY[j]) > ee.radius*ee.radius) continue;
+        var t = Math.atan2(pY[j]-ee.y, pX[i]-ee.x) - ee.theta;
         while(t <= -Math.PI) t += 2*Math.PI;
         while(t > Math.PI) t -= 2*Math.PI;
         if (Math.abs(t)*2 > ee.fov_r) continue;
         var blocked = false;
-        for (var x = Math.min(eX, pX[i]), xx = Math.max(eX, pX[i]); x <= xx; x += TILE_SIZE) {
-          for (var y = Math.min(eY, pY[j]), yy = Math.max(eY, pY[j]); y <= yy; y += TILE_SIZE) {
+        for (var x = Math.min(ee.x, pX[i]), xx = Math.max(ee.x, pX[i]); x <= xx; x += TILE_SIZE) {
+          for (var y = Math.min(ee.y, pY[j]), yy = Math.max(ee.y, pY[j]); y <= yy; y += TILE_SIZE) {
             var tx = Math.floor(x / TILE_SIZE) * TILE_SIZE, ty = Math.floor(y / TILE_SIZE) * TILE_SIZE;
             if (instance.map.isImpassableAt(x, y) &&
-                (VisibilityPolygon.intersectLines([eX, eY], [pX[i], pY[j]], [tx, ty], [tx, ty+TILE_SIZE]).length != 0 ||
-                 VisibilityPolygon.intersectLines([eX, eY], [pX[i], pY[j]], [tx, ty], [tx+TILE_SIZE, ty]).length != 0 ||
-                 VisibilityPolygon.intersectLines([eX, eY], [pX[i], pY[j]], [tx, ty+TILE_SIZE], [tx+TILE_SIZE, ty+TILE_SIZE]).length != 0 ||
-                 VisibilityPolygon.intersectLines([eX, eY], [pX[i], pY[j]], [tx+TILE_SIZE, ty], [tx+TILE_SIZE, ty+TILE_SIZE]).length != 0)) {
+                (VisibilityPolygon.intersectLines([ee.x, ee.y], [pX[i], pY[j]], [tx, ty], [tx, ty+TILE_SIZE]).length != 0 ||
+                 VisibilityPolygon.intersectLines([ee.x, ee.y], [pX[i], pY[j]], [tx, ty], [tx+TILE_SIZE, ty]).length != 0 ||
+                 VisibilityPolygon.intersectLines([ee.x, ee.y], [pX[i], pY[j]], [tx, ty+TILE_SIZE], [tx+TILE_SIZE, ty+TILE_SIZE]).length != 0 ||
+                 VisibilityPolygon.intersectLines([ee.x, ee.y], [pX[i], pY[j]], [tx+TILE_SIZE, ty], [tx+TILE_SIZE, ty+TILE_SIZE]).length != 0)) {
               blocked = true;
             }
           } 
@@ -275,6 +305,9 @@ function GameManager() {
         if (!blocked) ee.detected = true;
       }
 
+      if (!instance.hasGun && ((dx == 0 && dy == 0) || instance.state["canwalk"])) {
+        ee.detected = false;
+      }
       if (ee.detected && !isDown(Q)) {
         instance.paused = true;
         if (instance.state["level"] == 1 && !("hasBeenCaught" in instance.state)) {
@@ -315,8 +348,8 @@ function GameManager() {
       instance.facing = dx < 0 ? LEFT : RIGHT;
       instance.player.texture = SpritePool.getTexture(SpritePool.PLAYER_SIDE);
     } 
-    instance.player.x = (STAGE_WIDTH - instance.player.width)/2 + viewOffsetX;
-    instance.player.y = (STAGE_HEIGHT - instance.player.height)/2 + viewOffsetY;
+    instance.player.x = STAGE_WIDTH/2 + viewOffsetX;
+    instance.player.y = STAGE_HEIGHT/2 + viewOffsetY;
 
     if (instance.gun) {
       instance.gun.visible = !instance.hasGun;
@@ -330,12 +363,12 @@ function GameManager() {
 
     for(var e=0; e<instance.enemies.length; e++) {
       var ee = instance.enemies[e];
-      ee.sprite.x = ee.x * TILE_SIZE - instance.playerX + instance.player.x;
-      ee.sprite.y = ee.y * TILE_SIZE - instance.playerY + instance.player.y; 
+      ee.sprite.x = ee.x - instance.playerX + instance.player.x;
+      ee.sprite.y = ee.y - instance.playerY + instance.player.y; 
     }
     instance.map.renderViewport(mapX, mapY, 
             STAGE_WIDTH, STAGE_HEIGHT, 
-            instance.player.x + instance.player.width/2, instance.player.y + instance.player.height/2,
+            instance.player.x, instance.player.y,
             instance.enemies);
 
     instance.spritesLayer.children.sort(function(a, b) {
@@ -343,6 +376,7 @@ function GameManager() {
     });
 
     if (instance.state["level"] == 1 && instance.map.getTile(instance.playerX, instance.playerY) == Map.WALK_LICENSE) {
+      instance.state["canwalk"] = true;
       instance.showDialogue(GameManager.dialogues[2], instance.loadMap.bind(instance, 2));
     }
 
@@ -363,7 +397,9 @@ function GameManager() {
       var ee = instance.enemies[e];
       if (ee.rotating === 0) {
         // move towards target
-        var goal = ee.keypoints[(ee.k+1) % ee.keypoints.length];
+        var goal = ee.keypoints[(ee.k+1) % ee.keypoints.length].slice(0);
+        goal[0] = goal[0] * TILE_SIZE + TILE_SIZE/2;
+        goal[1] = goal[1] * TILE_SIZE + TILE_SIZE/2;
         var d = Math.sqrt(dist2(ee.x, ee.y, goal[0], goal[1]));
         if(d < ee.speed) {
           ee.rotating = 1;
