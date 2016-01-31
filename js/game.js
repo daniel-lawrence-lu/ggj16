@@ -49,15 +49,9 @@ loading.addChild(loadingBar);
 loading.addChild(loadingFill);
 
 // preload
-PIXI.loader.add([
-  "../assets/img/ground.png", 
-  "../assets/img/player.png", 
-  "../assets/img/wall.png",
-  "../assets/img/start.png",
-]).on('progress', progress).load(ready);
+Map.preload(progress, ready);
 
 function progress(loader) {
-  console.log(loader.progress);
   loadingFill.clear();
   loadingFill.beginFill(0x0000FF);
   loadingFill.drawRect(0, 0, loadingBar.width * loader.progress / 100, loadingBar.height);

@@ -39,6 +39,24 @@ function GameManager() {
 
   var gameLoop = function(dt) {
     if (!instance.paused) {
+      var ox = 0;
+      var oy = 0;
+      var CONVEYOR_SPEED = 2;
+      switch(instance.map.getTile(instance.playerX, instance.playerY)) {
+        case Map.CONVEYOR_L:
+          ox -= CONVEYOR_SPEED; 
+          break;
+        case Map.CONVEYOR_R:
+          ox += CONVEYOR_SPEED; 
+          break;
+        case Map.CONVEYOR_U:
+          oy -= CONVEYOR_SPEED; 
+          break;
+        case Map.CONVEYOR_D:
+          oy += CONVEYOR_SPEED; 
+          break;
+      }
+
       var dx = 0;
       var dy = 0;
       if (isDown(LEFT)) {
@@ -54,33 +72,31 @@ function GameManager() {
         dy++;
       }
       
-      if (dx != 0 || dy != 0) {
-        var n = Math.sqrt(Math.abs(dx) + Math.abs(dy));
-        var nx = instance.playerX + dx/n*instance.playerV*dt;
-        var ny = instance.playerY + dy/n*instance.playerV*dt;
-        var alignedx = Math.floor(instance.playerX / Map.tileSize) * Map.tileSize + (instance.playerX / Map.tileSize - Math.floor(instance.playerX / Map.tileSize) < 0.5 ? instance.player.width/2 : Map.tileSize - instance.player.width/2);
-        var alignedy = Math.floor(instance.playerY / Map.tileSize) * Map.tileSize + (instance.playerY / Map.tileSize - Math.floor(instance.playerY / Map.tileSize) < 0.5 ? instance.player.height/2 : Map.tileSize - instance.player.height/2);
+      var n = Math.max(1, Math.sqrt(Math.abs(dx) + Math.abs(dy)));
+      var nx = instance.playerX + dx/n*instance.playerV*dt + ox*dt;
+      var ny = instance.playerY + dy/n*instance.playerV*dt + oy*dt;
+      var alignedx = Math.floor(instance.playerX / Map.tileSize) * Map.tileSize + (instance.playerX / Map.tileSize - Math.floor(instance.playerX / Map.tileSize) < 0.5 ? instance.player.width/2 : Map.tileSize - instance.player.width/2);
+      var alignedy = Math.floor(instance.playerY / Map.tileSize) * Map.tileSize + (instance.playerY / Map.tileSize - Math.floor(instance.playerY / Map.tileSize) < 0.5 ? instance.player.height/2 : Map.tileSize - instance.player.height/2);
   
-        if (!instance.map.isImpassable(nx + instance.player.width/2, ny + instance.player.height/2) &&
-            !instance.map.isImpassable(nx - instance.player.width/2, ny + instance.player.height/2) &&
-            !instance.map.isImpassable(nx + instance.player.width/2, ny - instance.player.height/2) &&
-            !instance.map.isImpassable(nx - instance.player.width/2, ny - instance.player.height/2)) {
-          instance.playerX = nx;
-          instance.playerY = ny;
-        } else if (dx != 0 &&
-            !instance.map.isImpassable(nx + dx*instance.player.width/2, instance.playerY + instance.player.height/2 - 2) &&
-            !instance.map.isImpassable(nx + dx*instance.player.width/2, instance.playerY - instance.player.height/2 + 2)) {
-          instance.playerX = nx;
-          if (dy != 0) instance.playerY = alignedy;
-        } else if (dy != 0 &&
-            !instance.map.isImpassable(instance.playerX + instance.player.width/2 - 2, ny + dy*instance.player.height/2) &&
-            !instance.map.isImpassable(instance.playerX - instance.player.width/2 + 2, ny + dy*instance.player.height/2)) {
-          if (dx != 0) instance.playerX = alignedx;
-          instance.playerY = ny;
-        } else {
-          if (dx != 0) instance.playerX = alignedx;
-          if (dy != 0) instance.playerY = alignedy;
-        }
+      if (!instance.map.isImpassable(nx + instance.player.width/2, ny + instance.player.height/2) &&
+          !instance.map.isImpassable(nx - instance.player.width/2, ny + instance.player.height/2) &&
+          !instance.map.isImpassable(nx + instance.player.width/2, ny - instance.player.height/2) &&
+          !instance.map.isImpassable(nx - instance.player.width/2, ny - instance.player.height/2)) {
+        instance.playerX = nx;
+        instance.playerY = ny;
+      } else if (nx != instance.playerX &&
+          !instance.map.isImpassable(nx + sign(nx - instance.playerX)*instance.player.width/2, instance.playerY + instance.player.height/2 - 2) &&
+          !instance.map.isImpassable(nx + sign(nx - instance.playerX)*instance.player.width/2, instance.playerY - instance.player.height/2 + 2)) {
+        instance.playerX = nx;
+        if (ny != instance.playerY) instance.playerY = alignedy;
+      } else if (ny != instance.playerY &&
+          !instance.map.isImpassable(instance.playerX + instance.player.width/2 - 2, ny + sign(ny - instance.playerY)*instance.player.height/2) &&
+          !instance.map.isImpassable(instance.playerX - instance.player.width/2 + 2, ny + sign(ny - instance.playerY)*instance.player.height/2)) {
+        if (nx != instance.playerX) instance.playerX = alignedx;
+        instance.playerY = ny;
+      } else {
+        if (nx != instance.playerX) instance.playerX = alignedx;
+        if (ny != instance.playerY) instance.playerY = alignedy;
       }
       this.updateEnemies();
     } // if (instance.paused)
