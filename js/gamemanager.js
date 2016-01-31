@@ -230,7 +230,6 @@ function GameManager() {
       ee.sprite.x = ee.x * TILE_SIZE - instance.playerX + instance.player.x;
       ee.sprite.y = ee.y * TILE_SIZE - instance.playerY + instance.player.y; 
     }
-console.log(instance.enemies);
     instance.map.renderViewport(mapX, mapY, 
             STAGE_WIDTH, STAGE_HEIGHT, 
             instance.player.x + instance.player.width/2, instance.player.y + instance.player.height/2,
@@ -250,64 +249,6 @@ console.log(instance.enemies);
     instance.addChild(Dialogue.showDialogue(dialogue, cb || instance.resume));
   }
 
-  this.loadMap = function(map) {
-    PIXI.ticker.shared.remove(gameLoop, instance);
-    instance.removeChildren();
-    SpritePool.resetSprites();
-
-    var data = PIXI.loader.resources[map].data;
-    if(data.tileSize !== undefined) {
-      TILE_SIZE = data.tileSize;
-      MAX_TILES = (Math.ceil(STAGE_WIDTH / TILE_SIZE) + 1) * (Math.ceil(STAGE_HEIGHT / TILE_SIZE) + 1);
-    } else {
-      TILE_SIZE = TILE_SIZE_DEFAULT;
-      MAX_TILES = (Math.ceil(STAGE_WIDTH / TILE_SIZE) + 1) * (Math.ceil(STAGE_HEIGHT / TILE_SIZE) + 1);
-    }
-    instance.map = new Map(data.map);
-    instance.addChild(instance.map);
-
-    instance.spritesLayer = new PIXI.Container();
-    instance.addChild(instance.spritesLayer);
-    
-    var ui = new UI();
-    ui.y = STAGE_HEIGHT;
-    instance.addChild(ui);
-
-    instance.playerX = data.playerX * TILE_SIZE + TILE_SIZE / 2;
-    instance.playerY = data.playerY * TILE_SIZE + TILE_SIZE / 2;
-    instance.player = new PIXI.Sprite(SpritePool.getTexture(SpritePool.PLAYER_DOWN));
-    instance.player.scale = new PIXI.Point(0.5, 0.5);
-    instance.spritesLayer.addChild(instance.player);
-    
-    instance.enemies = data.enemies;
-    for(var e=0; e<instance.enemies.length; e++) {
-      var ee = instance.enemies[e];
-      ee.sprite = new PIXI.extras.MovieClip(SpritePool.getTextures(SpritePool.ENEMY1_DOWN_STAND));
-      ee.sprite.play();
-      instance.spritesLayer.addChild(ee.sprite);
-      ee.x = ee.keypoints[0][0];
-      ee.y = ee.keypoints[0][1];
-      ee.k = 0; // which keypoint the ee is at
-      for(var i=0; i<ee.keypoints.length; i++) {
-        if (ee.keypoints[i].length < 3) {
-          var i2 = (i+1) % ee.keypoints.length;
-          ee.keypoints[i].push(
-            Math.atan2(
-              ee.keypoints[i2][1] - ee.keypoints[i][1],
-              ee.keypoints[i2][0] - ee.keypoints[i][0]) / Math.PI * 180
-            );
-        }
-      }
-      ee.theta = ee.keypoints[0][2] * Math.PI / 180;
-      if (!("omega" in ee)) ee.omega = ENEMY_OMEGA;
-      ee.omega *= Math.PI / 180;
-      if (!("speed" in ee)) ee.speed = ENEMY_V;
-      ee.rotating = 0;
-    }
-
-    PIXI.ticker.shared.add(gameLoop, instance);
-  }
-
   this.updateEnemies = function() {
     for (var e=0; e<instance.enemies.length; e++) {
       var ee = instance.enemies[e];
@@ -323,8 +264,8 @@ console.log(instance.enemies);
               dy = (goal[1] - ee.y)/d;
           ee.x += dx * ee.speed;
           ee.y += dy * ee.speed;
-
-  if (Math.abs(dx) > Math.abs(dy)) {
+  
+          if (Math.abs(dx) > Math.abs(dy)) {
             if (dx > 0) {
               ee.sprite.textures = SpritePool.getTextures(SpritePool.ENEMY1_RIGHT_WALK);
             } else { 
