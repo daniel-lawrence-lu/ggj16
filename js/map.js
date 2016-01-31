@@ -235,6 +235,9 @@ Map.CONVEYOR_D = 5;
 Map.WALK_LICENSE = 6;
 Map.WALK_LICENSE_SIGN_LEFT = 7;
 Map.WALK_LICENSE_SIGN_RIGHT = 8;
+Map.GUN_LICENSE = 9;
+Map.GUN_TRAINING_SIGN_LEFT = 10;
+Map.GUN_TRAINING_SIGN_RIGHT = 11;
 
 // Format: [spritepool_id, rotation (degrees clockwise), impassable]
 Map.tiles = [];
@@ -247,3 +250,6 @@ Map.tiles[Map.CONVEYOR_D] = [SpritePool.CONVEYOR, 270, false];
 Map.tiles[Map.WALK_LICENSE] = [SpritePool.WALK_LICENSE, 0, false];
 Map.tiles[Map.WALK_LICENSE_SIGN_LEFT] = [SpritePool.WALK_LICENSE_SIGN_LEFT, 0, true];
 Map.tiles[Map.WALK_LICENSE_SIGN_RIGHT] = [SpritePool.WALK_LICENSE_SIGN_RIGHT, 0, true];
+Map.tiles[Map.GUN_LICENSE] = [SpritePool.GUN_LICENSE, 0, false];
+Map.tiles[Map.GUN_TRAINING_SIGN_LEFT] = [SpritePool.GUN_TRAINING_SIGN_LEFT, 0, true];
+Map.tiles[Map.GUN_TRAINING_SIGN_RIGHT] = [SpritePool.GUN_TRAINING_SIGN_RIGHT, 0, true];

@@ -19,6 +19,9 @@ SpritePool.WALK_LICENSE_SIGN_LEFT = 15;
 SpritePool.WALK_LICENSE_SIGN_RIGHT = 16;
 SpritePool.GUN = 17;
 SpritePool.BULLET = 18;
+SpritePool.GUN_LICENSE = 51;
+SpritePool.GUN_TRAINING_SIGN_LEFT = 52;
+SpritePool.GUN_TRAINING_SIGN_RIGHT = 53;
 
 
 // FORMAT: [path, frames, max_instances (0 to cache texture only)]
@@ -43,6 +46,9 @@ SpritePool.METADATA[SpritePool.WALK_LICENSE_SIGN_LEFT] = ["../assets/img/walk_li
 SpritePool.METADATA[SpritePool.WALK_LICENSE_SIGN_RIGHT] = ["../assets/img/walk_license_sign.png", [1], 1]; 
 SpritePool.METADATA[SpritePool.GUN] = ["../assets/img/gun.png", [0], 1]; 
 SpritePool.METADATA[SpritePool.BULLET] = ["../assets/img/bullet.png", [0], 500]; 
+SpritePool.METADATA[SpritePool.GUN_LICENSE] = ["../assets/img/gun_license.png", [0], 1]; 
+SpritePool.METADATA[SpritePool.GUN_TRAINING_SIGN_LEFT] = ["../assets/img/gun_training_sign.png", [0], 1]; 
+SpritePool.METADATA[SpritePool.GUN_TRAINING_SIGN_RIGHT] = ["../assets/img/gun_training_sign.png", [1], 1]; 
 
 SpritePool.WALLS = [];
 SpritePool.WALL2S = [];
