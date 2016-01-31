@@ -55,7 +55,7 @@
       {
         "radius": 180,
         "fov": 120,
-        "omega": 7,
+        "omega": 6,
         "keypoints": [[2, 21, 0]]
       },
       {
