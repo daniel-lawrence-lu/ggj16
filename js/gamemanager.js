@@ -306,7 +306,6 @@ console.log(instance.enemies);
     }
 
     PIXI.ticker.shared.add(gameLoop, instance);
->>>>>>> e10fbc1484ef8ebb0dd092644948f875ab6d8df9
   }
 
   this.updateEnemies = function() {
