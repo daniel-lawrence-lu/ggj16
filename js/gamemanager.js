@@ -430,7 +430,7 @@ GameManager.prototype = Object.create(PIXI.Container.prototype);
 GameManager.prototype.constructor = GameManager;
 GameManager.maps = [
   "../assets/maps/tutorial.json",
-  "../assets/maps/level1.json",
+  "../assets/maps/level2.json",
   "../assets/maps/levelcarolyn.json"
 ];
 GameManager.dialogues = [
