@@ -238,6 +238,10 @@ function GameManager() {
     instance.spritesLayer.children.sort(function(a, b) {
       return a.y - b.y;
     });
+
+    if (instance.state["level"] == 1 && instance.map.getTile(instance.playerX, instance.playerY) == Map.WALK_LICENSE) {
+      instance.showDialogue(GameManager.dialogues[2], instance.loadMap.bind(instance, 2));
+    }
   }
 
   this.resume = function() {
@@ -326,5 +330,6 @@ GameManager.maps = [
 ];
 GameManager.dialogues = [
   "../assets/dialogues/tutorial.json",
-  "../assets/dialogues/nolicensetowalk.json"
+  "../assets/dialogues/nolicensetowalk.json",
+  "../assets/dialogues/walklicenseobtained.json"
 ];
