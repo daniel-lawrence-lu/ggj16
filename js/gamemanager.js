@@ -129,6 +129,12 @@ function GameManager() {
     } 
     instance.player.x = (STAGE_WIDTH - instance.player.width)/2 + viewOffsetX;
     instance.player.y = (STAGE_HEIGHT - instance.player.height)/2 + viewOffsetY;
+
+    for(var e=0; e<instance.enemies.length; e++) {
+      var ee = instance.enemies[e];
+      ee.sprite.x = ee.x * TILE_SIZE - instance.playerX + instance.player.x;
+      ee.sprite.y = ee.y * TILE_SIZE - instance.playerY + instance.player.y;
+    }
     instance.map.renderViewport(mapX, mapY, 
             STAGE_WIDTH, STAGE_HEIGHT, 
             instance.player.x + instance.player.width/2, instance.player.y + instance.player.height/2,
@@ -174,6 +180,7 @@ function GameManager() {
     for(var e=0; e<instance.enemies.length; e++) {
       var ee = instance.enemies[e];
       ee.sprite = new PIXI.extras.MovieClip(SpritePool.getTextures(SpritePool.ENEMY1_DOWN_STAND));
+      ee.sprite.play();
       instance.spritesLayer.addChild(ee.sprite);
       ee.x = ee.keypoints[0][0];
       ee.y = ee.keypoints[0][1];
