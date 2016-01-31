@@ -2,58 +2,71 @@ function Map(map) {
   PIXI.Container.call(this);
 
   this.map = map;
+  this.getWidth = function() {
+    return this.map[0].length * TILE_SIZE;
+  }
+  this.getHeight = function() {
+    return this.map.length * TILE_SIZE;
+  }
   this.getTile = function(x, y) {
     // Assumes x, y in range
-    return this.map[Math.floor(y/Map.tileSize)][Math.floor(x/Map.tileSize)];
+    return this.map[Math.floor(y/TILE_SIZE)][Math.floor(x/TILE_SIZE)];
+  }
+  this.isImpassable = function(tile) {
+    return Map.tiles[tile][2];
+  }
+  this.isImpassableAt = function(x, y) {
+    if (x < 0 || y < 0 || x >= this.getWidth() || y >= this.getHeight()) return true; 
+    return this.isImpassable(this.getTile(x, y));
   }
   this.renderViewport = function(x, y, width, height, playerX, playerY, enemies) {
     this.removeChildren();
     Map.spritePoolIdx = {};
     var obstacleSegments = [];
-    for (var r = Math.floor(y/Map.tileSize);
-        r < Math.min(this.map.length, Math.floor((y + height)/Map.tileSize)+1);
+    for (var r = Math.floor(y/TILE_SIZE);
+        r < Math.min(this.map.length, Math.floor((y + height)/TILE_SIZE)+1);
         r++) {
-      for (var c = Math.floor(x/Map.tileSize);
-          c < Math.min(this.map[0].length, Math.floor((x + width)/Map.tileSize)+1);
+      for (var c = Math.floor(x/TILE_SIZE);
+          c < Math.min(this.map[0].length, Math.floor((x + width)/TILE_SIZE)+1);
           c++) {
-        var tileX = c * Map.tileSize - x, tileY = r * Map.tileSize - y;
+        var tileX = c * TILE_SIZE - x, tileY = r * TILE_SIZE - y;
         
-        var sprite = Map.getSprite(Map.tiles[this.map[r][c]][0]);
-	sprite.x = tileX + Map.tileSize/2;
-        sprite.y = tileY + Map.tileSize/2;
-        sprite.width = Map.tileSize;
-        sprite.height = Map.tileSize;
+        var sprite = SpritePool.getSprite(Map.tiles[this.map[r][c]][0]);
+	sprite.x = tileX + TILE_SIZE/2;
+        sprite.y = tileY + TILE_SIZE/2;
+        sprite.width = TILE_SIZE;
+        sprite.height = TILE_SIZE;
         sprite.rotation = Map.tiles[this.map[r][c]][1] * Math.PI / 180;
         this.addChild(sprite);
 
-        if(Map.impassable[this.map[r][c]]) {
-          if(playerX <= tileX && !Map.impassable[this.map[r][c-1]]) {
+        if(this.isImpassable(this.map[r][c])) {
+          if(playerX <= tileX && !this.isImpassable(this.map[r][c-1])) {
             obstacleSegments.push([
                 [tileX, tileY],
-                [tileX, tileY + Map.tileSize]
+                [tileX, tileY + TILE_SIZE]
             ]);
-          } else if(playerX >= tileX + Map.tileSize && !Map.impassable[this.map[r][c+1]]) {
+          } else if(playerX >= tileX + TILE_SIZE && !this.isImpassable(this.map[r][c+1])) {
             obstacleSegments.push([
-                [tileX + Map.tileSize, tileY],
-                [tileX + Map.tileSize, tileY + Map.tileSize]
+                [tileX + TILE_SIZE, tileY],
+                [tileX + TILE_SIZE, tileY + TILE_SIZE]
             ]);
           }
-          if(playerY <= tileY && !Map.impassable[this.map[r-1][c]]) {
+          if(playerY <= tileY && !this.isImpassable(this.map[r-1][c])) {
             obstacleSegments.push([
                 [tileX, tileY],
-                [tileX + Map.tileSize, tileY]
+                [tileX + TILE_SIZE, tileY]
             ]);
-          } else if(playerY >= tileY + Map.tileSize && !Map.impassable[this.map[r+1][c]]) {
+          } else if(playerY >= tileY + TILE_SIZE && !this.isImpassable(this.map[r+1][c])) {
             obstacleSegments.push([
-                [tileX, tileY + Map.tileSize],
-                [tileX + Map.tileSize, tileY + Map.tileSize]
+                [tileX, tileY + TILE_SIZE],
+                [tileX + TILE_SIZE, tileY + TILE_SIZE]
             ]);
           }
         }
       }
     }
 
-    /*
+    //*
     for(var i=0; i<obstacleSegments.length; i++) {
       // draw segments used in visibility polygon calculation
       var seg = new PIXI.Graphics();
@@ -64,7 +77,7 @@ function Map(map) {
       seg.endFill();
       this.addChild(seg);
     }
-    */
+    //*/
 
     for(var e=0; e<enemies.length; e++) {
       this.drawVisibilityPolygonEnemy(enemies[e], x, y, width, height);
@@ -90,8 +103,8 @@ function Map(map) {
     this.addChild(lightPolygon);
   }
   this.drawVisibilityPolygonEnemy = function(enemy, x, y, width, height) {
-    var eX = enemy.x * Map.tileSize - x + Map.tileSize/2, eY = enemy.y * Map.tileSize - y + Map.tileSize/2,
-      eT = enemy.theta, eR = enemy.radius, eF = enemy.fov;
+    var eX = enemy.x * TILE_SIZE - x + TILE_SIZE/2, eY = enemy.y * TILE_SIZE - y + TILE_SIZE/2,
+      eT = enemy.theta, eR = enemy.radius, eF = enemy.fov * Math.PI / 180;
     var x0 = eX - 1 * Math.cos(eT), y0 = eY - 1 * Math.sin(eT);
     var obstaclePolygon = [[x0, y0]];
     var wedge = [x0, y0];
@@ -113,32 +126,32 @@ function Map(map) {
       for (var c = 0;
           c < this.map[0].length;
           c++) {
-        var tileX = c * Map.tileSize - x, tileY = r * Map.tileSize - y;
+        var tileX = c * TILE_SIZE - x, tileY = r * TILE_SIZE - y;
         if((tileX - eX) * (tileX - eX) + (tileY - eY) * (tileY - eY) > 
-            (eR + 2*Map.tileSize) * (eR + 2*Map.tileSize)) {
+            (eR + 2*TILE_SIZE) * (eR + 2*TILE_SIZE)) {
           continue;
         }
-        if(Map.impassable[this.map[r][c]]) {
-          if(eX <= tileX && !Map.impassable[this.map[r][c-1]]) {
+        if(this.isImpassable(this.map[r][c])) {
+          if(eX <= tileX && !this.isImpassable(this.map[r][c-1])) {
             obstacleSegments.push([
                 [tileX, tileY],
-                [tileX, tileY + Map.tileSize]
+                [tileX, tileY + TILE_SIZE]
             ]);
-          } else if(eX >= tileX + Map.tileSize && !Map.impassable[this.map[r][c+1]]) {
+          } else if(eX >= tileX + TILE_SIZE && !this.isImpassable(this.map[r][c+1])) {
             obstacleSegments.push([
-                [tileX + Map.tileSize, tileY],
-                [tileX + Map.tileSize, tileY + Map.tileSize]
+                [tileX + TILE_SIZE, tileY],
+                [tileX + TILE_SIZE, tileY + TILE_SIZE]
             ]);
           }
-          if(eY <= tileY && !Map.impassable[this.map[r-1][c]]) {
+          if(eY <= tileY && !this.isImpassable(this.map[r-1][c])) {
             obstacleSegments.push([
                 [tileX, tileY],
-                [tileX + Map.tileSize, tileY]
+                [tileX + TILE_SIZE, tileY]
             ]);
-          } else if(eY >= tileY + Map.tileSize && !Map.impassable[this.map[r+1][c]]) {
+          } else if(eY >= tileY + TILE_SIZE && !this.isImpassable(this.map[r+1][c])) {
             obstacleSegments.push([
-                [tileX, tileY + Map.tileSize],
-                [tileX + Map.tileSize, tileY + Map.tileSize]
+                [tileX, tileY + TILE_SIZE],
+                [tileX + TILE_SIZE, tileY + TILE_SIZE]
             ]);
           }
         }
@@ -169,24 +182,9 @@ function Map(map) {
     this.addChild(lightPolygon);
 
   }
-  this.isImpassable = function(x, y) {
-    var r = Math.floor(y/Map.tileSize);
-    var c = Math.floor(x/Map.tileSize);
-    return r < 0 || c < 0 || r >= this.map.length || c >= this.map[0].length ||
-      Map.impassable[this.map[r][c]];
-  }
-  this.getWidth = function() {
-    return this.map[0].length * Map.tileSize;
-  }
-  this.getHeight = function() {
-    return this.map.length * Map.tileSize;
-  }
 }
 Map.prototype = Object.create(PIXI.Container.prototype);
 Map.prototype.constructor = Map;
-
-Map.assetTileSize = 64;
-Map.tileSize = 64;
 
 Map.GROUND = 0;
 Map.WALL = 1;
@@ -195,73 +193,11 @@ Map.CONVEYOR_U = 3;
 Map.CONVEYOR_R = 4;
 Map.CONVEYOR_D = 5;
 
-// Rotations: degrees clockwise
-Map.tiles = [
-  ["../assets/img/ground.png", 0],
-  ["../assets/img/wall.png", 0],
-  ["../assets/img/conveyor.png", 0],
-  ["../assets/img/conveyor.png", 90],
-  ["../assets/img/conveyor.png", 180],
-  ["../assets/img/conveyor.png", 270],
-];
-Map.impassable = [
-  false,
-  true,
-  false,
-  false,
-  false,
-  false,
-];
-
-Map.spritePool = {};
-Map.spritePoolIdx = {};
-
-Map.getSprite = function(sprite) {
-  if (!(sprite in Map.spritePoolIdx)) {
-    Map.spritePoolIdx[sprite] = 0;
-  }
-  return Map.spritePool[sprite][Map.spritePoolIdx[sprite]++];
-}
-
-Map.preload = function(progressCb, doneCb) {
-  var added = {};
-  // Misc assets:
-  PIXI.loader.add([
-    "../assets/img/player.png",
-  ]);
-  for (var i in Map.tiles) {
-    if (!(Map.tiles[i][0] in added)) {
-      PIXI.loader.add(Map.tiles[i][0]);
-      added[Map.tiles[i][0]] = true;
-    }
-  }
-  PIXI.loader.on('progress', progressCb).load(function(loader) {
-    for (var i in loader.resources) {
-      if (i in Map.spritePool) continue;
-      Map.spritePool[i] = [];
-
-      // Assumes texture is 1 row of assetTileSize x assetTileSize tiles.
-      var frames = [];
-      var texture = loader.resources[i].texture;
-      for (var l = 0; l < texture.width; l += Map.assetTileSize) {
-        frames.push(new PIXI.Texture(texture, new PIXI.Rectangle(l, 0, Math.min(texture.width, Map.assetTileSize), Math.min(texture.height, Map.assetTileSize))));
-      }
-
-      var MAX_SPRITES = (Math.ceil(STAGE_WIDTH / Map.tileSize) + 1) * (Math.ceil(STAGE_HEIGHT / Map.tileSize) + 1);
-      for (var j=0; j < MAX_SPRITES; j++) {
-        var sprite;
-        if (frames.length == 1) {
-          sprite = new PIXI.Sprite(frames[0]);
-        } else {
-          sprite = new PIXI.extras.MovieClip(frames);
-          sprite.animationSpeed = 2;
-          sprite.play();
-        }
-        sprite.anchor = new PIXI.Point(0.5, 0.5);
-        Map.spritePool[i].push(sprite);
-      }
-    }
-    doneCb();
-  });
-}
-
+// Format: [spritepool_id, rotation (degrees clockwise), impassable]
+Map.tiles = [];
+Map.tiles[Map.GROUND] = [SpritePool.GROUND, 0, false];
+Map.tiles[Map.WALL] = [SpritePool.WALL, 0, true];
+Map.tiles[Map.CONVEYOR_L] = [SpritePool.CONVEYOR, 0, false];
+Map.tiles[Map.CONVEYOR_U] = [SpritePool.CONVEYOR, 0, false];
+Map.tiles[Map.CONVEYOR_R] = [SpritePool.CONVEYOR, 0, false];
+Map.tiles[Map.CONVEYOR_D] = [SpritePool.CONVEYOR, 0, false];

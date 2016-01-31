@@ -45,11 +45,10 @@ Dialogue.prototype = Object.create(PIXI.Container.prototype);
 Dialogue.prototype.constructor = Dialogue;
 Dialogue.showDialogue = function(json, doneCb) {
   var d = new Dialogue();
-  var dialogueLoaded = function(loader) {
-    var data = loader.resources["dialogue"].data;
+  var dialogueLoaded = function() {
+    var data = PIXI.loader.resources[json].data;
     d.setData(data, doneCb);
   }
-  PIXI.loader.add("dialogue", json).load(dialogueLoaded);
   return d;
 }
 

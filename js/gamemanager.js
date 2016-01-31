@@ -1,4 +1,5 @@
 var LEFT = 37, UP = 38, RIGHT = 39, DOWN = 40;
+var ENEMY_OMEGA = 0.1, ENEMY_V = 0.03;
 function GameManager() {
   PIXI.Container.call(this);
 
@@ -8,8 +9,6 @@ function GameManager() {
   instance.playerX = 0;
   instance.playerY = 0;
   instance.playerV = 5;
-  instance.enemyV = 0.03;
-  instance.enemyW = 0.1;
   instance.map = {};
   instance.isDown = [];
   instance.state = {};
@@ -75,30 +74,30 @@ function GameManager() {
       var n = Math.max(1, Math.sqrt(Math.abs(dx) + Math.abs(dy)));
       var nx = instance.playerX + dx/n*instance.playerV*dt + ox*dt;
       var ny = instance.playerY + dy/n*instance.playerV*dt + oy*dt;
-      var alignedx = Math.floor(instance.playerX / Map.tileSize) * Map.tileSize + (instance.playerX / Map.tileSize - Math.floor(instance.playerX / Map.tileSize) < 0.5 ? instance.player.width/2 : Map.tileSize - instance.player.width/2);
-      var alignedy = Math.floor(instance.playerY / Map.tileSize) * Map.tileSize + (instance.playerY / Map.tileSize - Math.floor(instance.playerY / Map.tileSize) < 0.5 ? instance.player.height/2 : Map.tileSize - instance.player.height/2);
+      var alignedx = Math.floor(instance.playerX / TILE_SIZE) * TILE_SIZE + (instance.playerX / TILE_SIZE - Math.floor(instance.playerX / TILE_SIZE) < 0.5 ? instance.player.width/2 : TILE_SIZE - instance.player.width/2);
+      var alignedy = Math.floor(instance.playerY / TILE_SIZE) * TILE_SIZE + (instance.playerY / TILE_SIZE - Math.floor(instance.playerY / TILE_SIZE) < 0.5 ? instance.player.height/2 : TILE_SIZE - instance.player.height/2);
   
-      if (!instance.map.isImpassable(nx + instance.player.width/2, ny + instance.player.height/2) &&
-          !instance.map.isImpassable(nx - instance.player.width/2, ny + instance.player.height/2) &&
-          !instance.map.isImpassable(nx + instance.player.width/2, ny - instance.player.height/2) &&
-          !instance.map.isImpassable(nx - instance.player.width/2, ny - instance.player.height/2)) {
+      if (!instance.map.isImpassableAt(nx + instance.player.width/2, ny + instance.player.height/2) &&
+          !instance.map.isImpassableAt(nx - instance.player.width/2, ny + instance.player.height/2) &&
+          !instance.map.isImpassableAt(nx + instance.player.width/2, ny - instance.player.height/2) &&
+          !instance.map.isImpassableAt(nx - instance.player.width/2, ny - instance.player.height/2)) {
         instance.playerX = nx;
         instance.playerY = ny;
       } else if (nx != instance.playerX &&
-          !instance.map.isImpassable(nx + sign(nx - instance.playerX)*instance.player.width/2, instance.playerY + instance.player.height/2 - 2) &&
-          !instance.map.isImpassable(nx + sign(nx - instance.playerX)*instance.player.width/2, instance.playerY - instance.player.height/2 + 2)) {
+          !instance.map.isImpassableAt(nx + sign(nx - instance.playerX)*instance.player.width/2, instance.playerY + instance.player.height/2 - 2) &&
+          !instance.map.isImpassableAt(nx + sign(nx - instance.playerX)*instance.player.width/2, instance.playerY - instance.player.height/2 + 2)) {
         instance.playerX = nx;
         if (ny != instance.playerY) instance.playerY = alignedy;
       } else if (ny != instance.playerY &&
-          !instance.map.isImpassable(instance.playerX + instance.player.width/2 - 2, ny + sign(ny - instance.playerY)*instance.player.height/2) &&
-          !instance.map.isImpassable(instance.playerX - instance.player.width/2 + 2, ny + sign(ny - instance.playerY)*instance.player.height/2)) {
+          !instance.map.isImpassableAt(instance.playerX + instance.player.width/2 - 2, ny + sign(ny - instance.playerY)*instance.player.height/2) &&
+          !instance.map.isImpassableAt(instance.playerX - instance.player.width/2 + 2, ny + sign(ny - instance.playerY)*instance.player.height/2)) {
         if (nx != instance.playerX) instance.playerX = alignedx;
         instance.playerY = ny;
       } else {
         if (nx != instance.playerX) instance.playerX = alignedx;
         if (ny != instance.playerY) instance.playerY = alignedy;
       }
-      this.updateEnemies();
+      this.updateEnemies(dt);
     } // if (instance.paused)
       
     // offset the view if the player is scrolling to the edge of the map
@@ -120,6 +119,13 @@ function GameManager() {
     }
     mapY -= viewOffsetY;
 
+    if (dx != 0) {
+      instance.player.texture = SpritePool.getTextures(SpritePool.PLAYER_SIDE);
+    } else if (dy < 0) {
+      instance.player.texture = SpritePool.getTextures(SpritePool.PLAYER_UP);
+    } else if (dx < 0) {
+      instance.player.texture = SpritePool.getTextures(SpritePool.PLAYER_DOWN);
+    }
     instance.player.x = (STAGE_WIDTH - instance.player.width)/2 + viewOffsetX;
     instance.player.y = (STAGE_HEIGHT - instance.player.height)/2 + viewOffsetY;
     instance.map.renderViewport(mapX, mapY, 
@@ -141,64 +147,60 @@ function GameManager() {
     PIXI.ticker.shared.remove(gameLoop, instance);
     instance.removeChildren();
 
-    instance.player = PIXI.Sprite.fromImage("../assets/img/player.png");
-    instance.player.x = (STAGE_WIDTH - instance.player.width)/2;
-    instance.player.y = (STAGE_HEIGHT - instance.player.height)/2;
+    var data = PIXI.loader.resources[map].data;
+    instance.map = new Map(data.map);
+    instance.addChild(instance.map);
 
-    var mapLoaded = function(loader) {
-      var data = loader.resources["map" + map].data;
-      instance.playerX = data.playerX * Map.tileSize + Map.tileSize / 2;
-      instance.playerY = data.playerY * Map.tileSize + Map.tileSize / 2;
-      instance.map = new Map(data.map);
-
-      instance.addChild(instance.map);
-      instance.addChild(instance.player);
-      
-      var ui = new UI();
-      ui.y = STAGE_HEIGHT;
-      instance.addChild(ui);
-     
-      PIXI.ticker.shared.add(gameLoop, instance);
-      instance.enemies = data.enemies;
-      for(var e=0; e<instance.enemies.length; e++) {
-        var ee = instance.enemies[e];
-        ee.x = ee.keypoints[0][0];
-        ee.y = ee.keypoints[0][1];
-        ee.k = 0; // which keypoint the enemy is at
-        for(var i=0; i<ee.keypoints.length; i++) {
+    instance.playerX = data.playerX * TILE_SIZE + TILE_SIZE / 2;
+    instance.playerY = data.playerY * TILE_SIZE + TILE_SIZE / 2;
+    instance.player = new PIXI.Sprite(SpritePool.getTextures(SpritePool.PLAYER_DOWN));
+    instance.addChild(instance.player);
+    
+    var ui = new UI();
+    ui.y = STAGE_HEIGHT;
+    instance.addChild(ui);
+    
+    instance.enemies = data.enemies;
+    for(var e=0; e<instance.enemies.length; e++) {
+      var ee = instance.enemies[e];
+      ee.x = ee.keypoints[0][0];
+      ee.y = ee.keypoints[0][1];
+      ee.k = 0; // which keypoint the ee is at
+      for(var i=0; i<ee.keypoints.length; i++) {
+        if (ee.keypoints[i].length < 3) {
           var i2 = (i+1) % ee.keypoints.length;
           ee.keypoints[i].push(
-              Math.atan2(
-                ee.keypoints[i2][1] - ee.keypoints[i][1],
-                ee.keypoints[i2][0] - ee.keypoints[i][0]
-                )
-              );
+            Math.atan2(
+              ee.keypoints[i2][1] - ee.keypoints[i][1],
+              ee.keypoints[i2][0] - ee.keypoints[i][0]) / Math.PI * 180
+            );
         }
-        ee.theta = ee.keypoints[0][2]
-        ee.rotating = 0;
       }
-      instance.showDialogue("../assets/dialogues/tutorial.json");
+      ee.theta = ee.keypoints[0][2] * Math.PI / 180;
+      if (!("omega" in ee)) ee.omega = ENEMY_OMEGA;
+      else ee.omega *= Math.PI / 180;
+      if (!("speed" in ee)) ee.speed = ENEMY_V;
+      ee.rotating = 0;
     }
-    PIXI.loader.add("map" + map, GameManager.maps[map]).load(mapLoaded);
+
+    PIXI.ticker.shared.add(gameLoop, instance);
   }
 
-  this.loadMap(0);
-
-  this.updateEnemies = function() {
+  this.updateEnemies = function(dt) {
     for(var e=0; e<instance.enemies.length; e++) {
       var ee = instance.enemies[e];
       if(ee.rotating === 0) {
         // move towards target
         var goal = ee.keypoints[(ee.k+1) % ee.keypoints.length];
         var d = Math.sqrt(dist2(ee.x, ee.y, goal[0], goal[1]));
-        if(d < instance.enemyV) {
+        if(d < ee.speed) {
           ee.rotating = 1;
           ee.k = (ee.k+1) % ee.keypoints.length;
         } else {
           var dx = (goal[0] - ee.x)/d,
-            dy = (goal[1] - ee.y)/d;
-          ee.x += dx * instance.enemyV;
-          ee.y += dy * instance.enemyV;
+              dy = (goal[1] - ee.y)/d;
+          ee.x += dx * ee.speed * dt;
+          ee.y += dy * ee.speed * dt;
         }
       } else {
         // rotate towards target
@@ -206,20 +208,28 @@ function GameManager() {
         var dtheta = goal - ee.theta;
         while(dtheta <= -Math.PI) dtheta += 2*Math.PI;
         while(dtheta > Math.PI) dtheta -= 2*Math.PI;
-        if(Math.abs(dtheta) <= instance.enemyW) {
+        if(Math.abs(dtheta) <= ee.omega * dt) {
           ee.theta = goal;
           ee.rotating = 0;
         } else if(dtheta < 0) {
-          ee.theta -= instance.enemyW;
+          ee.theta -= ee.omega * dt;
         } else {
-          ee.theta += instance.enemyW;
+          ee.theta += ee.omega * dt;
         }
       }
     }
-  };
+  }
+
+  this.play = function() {
+    this.loadMap(GameManager.maps[1]);
+  }
 }
 GameManager.prototype = Object.create(PIXI.Container.prototype);
 GameManager.prototype.constructor = GameManager;
 GameManager.maps = [
-  "../assets/maps/tutorial.json"
+  "../assets/maps/tutorial.json",
+  "../assets/maps/level1.json"
+];
+GameManager.dialogues = [
+  "../assets/dialogues/tutorial.json"
 ];
