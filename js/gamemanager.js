@@ -311,11 +311,12 @@ function GameManager() {
       }
       if (ee.detected && !isDown(Q)) {
         instance.paused = true;
-        if (instance.state["level"] == 1 && !("hasBeenCaught" in instance.state)) {
+        var level = instance.state["level"];
+        if (!("hasBeenCaught" in instance.state) || !instance.state["hasBeenCaught"]) {
           instance.state["hasBeenCaught"] = true;
-          instance.showDialogue(GameManager.dialogues[1], instance.loadMap.bind(instance, instance.state["level"]));
+          instance.showDialogue(GameManager.dialogues[level], instance.loadMap.bind(instance, level));
         } else {
-          instance.showDialogue(GameManager.dialogues[1], instance.loadMap.bind(instance, instance.state["level"]), 1000);
+          instance.showDialogue(GameManager.dialogues[level], instance.loadMap.bind(instance, level, 1000));
         }
       }
     } 
@@ -378,7 +379,7 @@ function GameManager() {
 
     if (instance.state["level"] == 1 && instance.map.getTile(instance.playerX, instance.playerY) == Map.WALK_LICENSE) {
       instance.state["canwalk"] = true;
-      instance.showDialogue(GameManager.dialogues[2], instance.loadMap.bind(instance, 2));
+      instance.showDialogue(GameManager.dialogues[3], instance.loadMap.bind(instance, 2));
     }
 
     instance.newDown = [];
@@ -475,5 +476,6 @@ GameManager.maps = [
 GameManager.dialogues = [
   "../assets/dialogues/tutorial.json",
   "../assets/dialogues/nolicensetowalk.json",
+  "../assets/dialogues/nogunlicense.json",
   "../assets/dialogues/walklicenseobtained.json"
 ];
