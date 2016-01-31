@@ -44,7 +44,6 @@ function Dialogue(data, doneCb, timeout) {
     window.addEventListener("mousedown", checkKey);
     window.addEventListener("keydown", checkKey);
 
-  
     var instruction = new PIXI.Text("Click to continue...", {font: "14pt sans serif", fill: 0xFFFFFF});
     instruction.x = APP_WIDTH - instruction.width - 10;
     instruction.y = 80;

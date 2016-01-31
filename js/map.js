@@ -140,7 +140,7 @@ function Map(map) {
     this.addChild(lightPolygon);
   }
   this.drawVisibilityPolygonEnemy = function(enemy, x, y, width, height) {
-    var eX = enemy.x * TILE_SIZE + TILE_SIZE/2 - x, eY = enemy.y * TILE_SIZE + TILE_SIZE/2 - y,
+    var eX = enemy.x * TILE_SIZE - x, eY = enemy.y * TILE_SIZE - y,
       eT = enemy.theta, eR = enemy.radius, eF = enemy.fov_r;
     if(eX < -eR || eY < -eR || eX > width + eR || eY > height + eR) {
       return;
@@ -160,12 +160,8 @@ function Map(map) {
       wedge.push(y1);
     }
     var obstacleSegments = VisibilityPolygon.convertToSegments([obstaclePolygon]);
-    for (var r = 0;
-        r < this.map.length;
-        r++) {
-      for (var c = 0;
-          c < this.map[0].length;
-          c++) {
+    for (var r = 0; r < this.map.length; r++) {
+      for (var c = 0; c < this.map[0].length; c++) {
         var tileX = c * TILE_SIZE - x, tileY = r * TILE_SIZE - y;
         if((tileX - eX) * (tileX - eX) + (tileY - eY) * (tileY - eY) > 
             (eR + 2*TILE_SIZE) * (eR + 2*TILE_SIZE)) {
@@ -235,6 +231,9 @@ Map.CONVEYOR_L = 2;
 Map.CONVEYOR_U = 3;
 Map.CONVEYOR_R = 4;
 Map.CONVEYOR_D = 5;
+Map.WALK_LICENSE = 6;
+Map.WALK_LICENSE_SIGN_LEFT = 7;
+Map.WALK_LICENSE_SIGN_RIGHT = 8;
 
 // Format: [spritepool_id, rotation (degrees clockwise), impassable]
 Map.tiles = [];
@@ -244,3 +243,6 @@ Map.tiles[Map.CONVEYOR_L] = [SpritePool.CONVEYOR, 0, false];
 Map.tiles[Map.CONVEYOR_U] = [SpritePool.CONVEYOR, 90, false];
 Map.tiles[Map.CONVEYOR_R] = [SpritePool.CONVEYOR, 180, false];
 Map.tiles[Map.CONVEYOR_D] = [SpritePool.CONVEYOR, 270, false];
+Map.tiles[Map.WALK_LICENSE] = [SpritePool.WALK_LICENSE, 0, false];
+Map.tiles[Map.WALK_LICENSE_SIGN_LEFT] = [SpritePool.WALK_LICENSE_SIGN_LEFT, 0, true];
+Map.tiles[Map.WALK_LICENSE_SIGN_RIGHT] = [SpritePool.WALK_LICENSE_SIGN_RIGHT, 0, true];
