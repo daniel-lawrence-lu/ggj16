@@ -37,136 +37,14 @@ function GameManager() {
     return item in instance.state && instance.state[item];
   }
 
-  var gameLoop = function() {
-    if (!instance.paused) {
-      var ox = 0;
-      var oy = 0;
-      var CONVEYOR_SPEED = 2;
-      switch(instance.map.getTile(instance.playerX, instance.playerY)) {
-        case Map.CONVEYOR_L:
-          ox -= CONVEYOR_SPEED; 
-          break;
-        case Map.CONVEYOR_R:
-          ox += CONVEYOR_SPEED; 
-          break;
-        case Map.CONVEYOR_U:
-          oy -= CONVEYOR_SPEED; 
-          break;
-        case Map.CONVEYOR_D:
-          oy += CONVEYOR_SPEED; 
-          break;
-      }
-
-      var dx = 0;
-      var dy = 0;
-      if (isDown(LEFT)) {
-        dx--;
-      }
-      if (isDown(UP)) {
-        dy--;
-      }
-      if (isDown(RIGHT)) {
-        dx++;
-      }
-      if (isDown(DOWN)) {
-        dy++;
-      }
-      
-      var n = Math.max(1, Math.sqrt(Math.abs(dx) + Math.abs(dy)));
-      var nx = instance.playerX + dx/n*instance.playerV + ox;
-      var ny = instance.playerY + dy/n*instance.playerV + oy;
-      var alignedx = Math.floor(instance.playerX / TILE_SIZE) * TILE_SIZE + (instance.playerX / TILE_SIZE - Math.floor(instance.playerX / TILE_SIZE) < 0.5 ? instance.player.width/2 : TILE_SIZE - instance.player.width/2);
-      var alignedy = Math.floor(instance.playerY / TILE_SIZE) * TILE_SIZE + (instance.playerY / TILE_SIZE - Math.floor(instance.playerY / TILE_SIZE) < 0.5 ? instance.player.height/2 : TILE_SIZE - instance.player.height/2);
-  
-      if (!instance.map.isImpassableAt(nx + instance.player.width/2, ny + instance.player.height/2) &&
-          !instance.map.isImpassableAt(nx - instance.player.width/2, ny + instance.player.height/2) &&
-          !instance.map.isImpassableAt(nx + instance.player.width/2, ny - instance.player.height/2) &&
-          !instance.map.isImpassableAt(nx - instance.player.width/2, ny - instance.player.height/2)) {
-        instance.playerX = nx;
-        instance.playerY = ny;
-      } else if (nx != instance.playerX &&
-          !instance.map.isImpassableAt(nx + sign(nx - instance.playerX)*instance.player.width/2, instance.playerY + instance.player.height/2 - 2) &&
-          !instance.map.isImpassableAt(nx + sign(nx - instance.playerX)*instance.player.width/2, instance.playerY - instance.player.height/2 + 2)) {
-        instance.playerX = nx;
-        if (ny != instance.playerY) instance.playerY = alignedy;
-      } else if (ny != instance.playerY &&
-          !instance.map.isImpassableAt(instance.playerX + instance.player.width/2 - 2, ny + sign(ny - instance.playerY)*instance.player.height/2) &&
-          !instance.map.isImpassableAt(instance.playerX - instance.player.width/2 + 2, ny + sign(ny - instance.playerY)*instance.player.height/2)) {
-        if (nx != instance.playerX) instance.playerX = alignedx;
-        instance.playerY = ny;
-      } else {
-        if (nx != instance.playerX) instance.playerX = alignedx;
-        if (ny != instance.playerY) instance.playerY = alignedy;
-      }
-      this.updateEnemies();
-    } // if (instance.paused)
-      
-    // offset the view if the player is scrolling to the edge of the map
-    var viewOffsetX = 0, viewOffsetY = 0, mapX, mapY;
-    mapX = instance.playerX - STAGE_WIDTH/2;
-    mapY = instance.playerY - STAGE_HEIGHT/2;
-
-    if (mapX < 0) {
-      viewOffsetX = mapX;
-    } else if (mapX + STAGE_WIDTH >= instance.map.getWidth()) {
-      viewOffsetX = mapX + STAGE_WIDTH - instance.map.getWidth();
-    }
-    mapX -= viewOffsetX;
-
-    if (mapY < 0) {
-      viewOffsetY = mapY;
-    } else if (mapY + STAGE_HEIGHT >= instance.map.getHeight()) {
-      viewOffsetY = mapY + STAGE_HEIGHT - instance.map.getHeight();
-    }
-    mapY -= viewOffsetY;
-
-    if (dy > 0) {
-      instance.player.texture = SpritePool.getTexture(SpritePool.PLAYER_DOWN);
-    } else if (dy < 0) {
-      instance.player.texture = SpritePool.getTexture(SpritePool.PLAYER_UP);
-    } else if (dx != 0) {
-      instance.player.texture = SpritePool.getTexture(SpritePool.PLAYER_SIDE);
-    } 
-    instance.player.x = (STAGE_WIDTH - instance.player.width)/2 + viewOffsetX;
-    instance.player.y = (STAGE_HEIGHT - instance.player.height)/2 + viewOffsetY;
-
-    for(var e=0; e<instance.enemies.length; e++) {
-      var ee = instance.enemies[e];
-      ee.sprite.x = ee.x * TILE_SIZE - instance.playerX + instance.player.x;
-      ee.sprite.y = ee.y * TILE_SIZE - instance.playerY + instance.player.y;
-    }
-    instance.map.renderViewport(mapX, mapY, 
-            STAGE_WIDTH, STAGE_HEIGHT, 
-            instance.player.x + instance.player.width/2, instance.player.y + instance.player.height/2,
-            instance.enemies);
-
-    instance.spritesLayer.children.sort(function(a, b) {
-      return a.y - b.y;
-    });
-  }
-
-  this.resume = function() {
-    instance.paused = false;
-  }
-
-  this.showDialogue = function(dialogue) {
-    instance.paused = true;
-    instance.addChild(Dialogue.showDialogue(dialogue, instance.resume));
-  }
-
   this.loadMap = function(map) {
     PIXI.ticker.shared.remove(gameLoop, instance);
     instance.removeChildren();
     SpritePool.resetSprites();
 
-    var data = PIXI.loader.resources[map].data;
-    if(data.tileSize !== undefined) {
-      TILE_SIZE = data.tileSize;
-      MAX_TILES = (Math.ceil(STAGE_WIDTH / TILE_SIZE) + 1) * (Math.ceil(STAGE_HEIGHT / TILE_SIZE) + 1);
-    } else {
-      TILE_SIZE = TILE_SIZE_DEFAULT;
-      MAX_TILES = (Math.ceil(STAGE_WIDTH / TILE_SIZE) + 1) * (Math.ceil(STAGE_HEIGHT / TILE_SIZE) + 1);
-    }
+    instance.state["level"] = map;
+
+    var data = PIXI.loader.resources[GameManager.maps[map]].data;
     instance.map = new Map(data.map);
     instance.addChild(instance.map);
 
@@ -204,16 +82,175 @@ function GameManager() {
       }
       ee.theta = ee.keypoints[0][2] * Math.PI / 180;
       if (!("omega" in ee)) ee.omega = ENEMY_OMEGA;
-      ee.omega *= Math.PI / 180;
+      ee.fov_r = ee.fov * Math.PI / 180;
+      ee.omega_r = ee.omega * Math.PI / 180;
       if (!("speed" in ee)) ee.speed = ENEMY_V;
       ee.rotating = 0;
     }
 
+    instance.resume();
     PIXI.ticker.shared.add(gameLoop, instance);
   }
 
-  this.updateEnemies = function() {
+  var gameLoop = function() {
+    if (instance.paused) return;
+
+    var ox = 0;
+    var oy = 0;
+    var CONVEYOR_SPEED = 2;
+    switch(instance.map.getTile(instance.playerX, instance.playerY)) {
+      case Map.CONVEYOR_L:
+        ox -= CONVEYOR_SPEED; 
+        break;
+      case Map.CONVEYOR_R:
+        ox += CONVEYOR_SPEED; 
+        break;
+      case Map.CONVEYOR_U:
+        oy -= CONVEYOR_SPEED; 
+        break;
+      case Map.CONVEYOR_D:
+        oy += CONVEYOR_SPEED; 
+        break;
+    }
+
+    var dx = 0;
+    var dy = 0;
+    if (isDown(LEFT)) {
+      dx--;
+    }
+    if (isDown(UP)) {
+      dy--;
+    }
+    if (isDown(RIGHT)) {
+      dx++;
+    }
+    if (isDown(DOWN)) {
+      dy++;
+    }
+    
+    var n = Math.max(1, Math.sqrt(Math.abs(dx) + Math.abs(dy)));
+    var nx = instance.playerX + dx/n*instance.playerV + ox;
+    var ny = instance.playerY + dy/n*instance.playerV + oy;
+    var alignedx = Math.floor(instance.playerX / TILE_SIZE) * TILE_SIZE + (instance.playerX / TILE_SIZE - Math.floor(instance.playerX / TILE_SIZE) < 0.5 ? instance.player.width/2 : TILE_SIZE - instance.player.width/2);
+    var alignedy = Math.floor(instance.playerY / TILE_SIZE) * TILE_SIZE + (instance.playerY / TILE_SIZE - Math.floor(instance.playerY / TILE_SIZE) < 0.5 ? instance.player.height/2 : TILE_SIZE - instance.player.height/2);
+  
+    if (!instance.map.isImpassableAt(nx + instance.player.width/2, ny + instance.player.height/2) &&
+        !instance.map.isImpassableAt(nx - instance.player.width/2, ny + instance.player.height/2) &&
+        !instance.map.isImpassableAt(nx + instance.player.width/2, ny - instance.player.height/2) &&
+        !instance.map.isImpassableAt(nx - instance.player.width/2, ny - instance.player.height/2)) {
+      instance.playerX = nx;
+      instance.playerY = ny;
+    } else if (nx != instance.playerX &&
+        !instance.map.isImpassableAt(nx + sign(nx - instance.playerX)*instance.player.width/2, instance.playerY + instance.player.height/2 - 2) &&
+        !instance.map.isImpassableAt(nx + sign(nx - instance.playerX)*instance.player.width/2, instance.playerY - instance.player.height/2 + 2)) {
+      instance.playerX = nx;
+      if (ny != instance.playerY) instance.playerY = alignedy;
+    } else if (ny != instance.playerY &&
+        !instance.map.isImpassableAt(instance.playerX + instance.player.width/2 - 2, ny + sign(ny - instance.playerY)*instance.player.height/2) &&
+        !instance.map.isImpassableAt(instance.playerX - instance.player.width/2 + 2, ny + sign(ny - instance.playerY)*instance.player.height/2)) {
+      if (nx != instance.playerX) instance.playerX = alignedx;
+      instance.playerY = ny;
+    } else {
+      if (nx != instance.playerX) instance.playerX = alignedx;
+      if (ny != instance.playerY) instance.playerY = alignedy;
+    }
+
+    this.updateEnemies();
+    for (var e=0; e<instance.enemies.length; e++) {
+      var ee = instance.enemies[e];
+      ee.detected = false;
+      if (dx == 0 && dy == 0) continue;
+      
+      var eX = ee.x * TILE_SIZE + TILE_SIZE/2, eY = ee.y * TILE_SIZE + TILE_SIZE/2;
+      var pX = [instance.playerX + instance.player.width/2 - 2, instance.playerX - instance.player.width/2 + 2];
+      var pY = [instance.playerY + instance.player.height/2 - 2, instance.playerY - instance.player.height/2 + 2];
+      for (var i=0; i < pX.length; i++) for (var j=0; j < pY.length; j++) {
+        if (dist2(eX, eY, pX[i], pY[j]) > ee.radius*ee.radius) continue;
+        var t = Math.atan2(pY[j]-eY, pX[i]-eX) - ee.theta;
+        while(t <= -Math.PI) t += 2*Math.PI;
+        while(t > Math.PI) t -= 2*Math.PI;
+        if (Math.abs(t)*2 > ee.fov_r) continue;
+        var blocked = false;
+        for (var x = eX; x <= pX[i]; x += TILE_SIZE) {
+          for (var y = eY; y <= pY[j]; y += TILE_SIZE) {
+            var tx = Math.floor(x / TILE_SIZE) * TILE_SIZE, ty = Math.floor(y / TILE_SIZE) * TILE_SIZE;
+            if (instance.map.isImpassableAt(x, y) &&
+                (VisibilityPolygon.intersectLines([eX, eY], [pX[i], pY[j]], [tx, ty], [tx, ty+TILE_SIZE]).length != 0 ||
+                 VisibilityPolygon.intersectLines([eX, eY], [pX[i], pY[j]], [tx, ty], [tx+TILE_SIZE, ty]).length != 0 ||
+                 VisibilityPolygon.intersectLines([eX, eY], [pX[i], pY[j]], [tx, ty+TILE_SIZE], [tx+TILE_SIZE, ty+TILE_SIZE]).length != 0 ||
+                 VisibilityPolygon.intersectLines([eX, eY], [pX[i], pY[j]], [tx+TILE_SIZE, ty], [tx+TILE_SIZE, ty+TILE_SIZE]).length != 0)) {
+              blocked = true;
+            }
+          } 
+        }
+        if (!blocked) ee.detected = true;
+      }
+      if (ee.detected) {
+        instance.paused = true;
+        if (instance.state["level"] == 1 && !("hasBeenCaught" in instance.state)) {
+          instance.state["hasBeenCaught"] = true;
+          instance.showDialogue(GameManager.dialogues[1], instance.loadMap.bind(instance, instance.state["level"]));
+        } else {
+          instance.showDialogue(GameManager.dialogues[1], instance.loadMap.bind(instance, instance.state["level"]), 1000);
+        }
+      }
+    } 
+      
+    // offset the view if the player is scrolling to the edge of the map
+    var viewOffsetX = 0, viewOffsetY = 0, mapX, mapY;
+    mapX = instance.playerX - STAGE_WIDTH/2;
+    mapY = instance.playerY - STAGE_HEIGHT/2;
+
+    if (mapX < 0) {
+      viewOffsetX = mapX;
+    } else if (mapX + STAGE_WIDTH >= instance.map.getWidth()) {
+      viewOffsetX = mapX + STAGE_WIDTH - instance.map.getWidth();
+    }
+    mapX -= viewOffsetX;
+
+    if (mapY < 0) {
+      viewOffsetY = mapY;
+    } else if (mapY + STAGE_HEIGHT >= instance.map.getHeight()) {
+      viewOffsetY = mapY + STAGE_HEIGHT - instance.map.getHeight();
+    }
+    mapY -= viewOffsetY;
+
+    if (dy > 0) {
+      instance.player.texture = SpritePool.getTexture(SpritePool.PLAYER_DOWN);
+    } else if (dy < 0) {
+      instance.player.texture = SpritePool.getTexture(SpritePool.PLAYER_UP);
+    } else if (dx != 0) {
+      instance.player.texture = SpritePool.getTexture(SpritePool.PLAYER_SIDE);
+    } 
+    instance.player.x = (STAGE_WIDTH - instance.player.width)/2 + viewOffsetX;
+    instance.player.y = (STAGE_HEIGHT - instance.player.height)/2 + viewOffsetY;
+
     for(var e=0; e<instance.enemies.length; e++) {
+      var ee = instance.enemies[e];
+      ee.sprite.x = ee.x * TILE_SIZE - instance.playerX + instance.player.x;
+      ee.sprite.y = ee.y * TILE_SIZE - instance.playerY + instance.player.y; 
+    }
+    instance.map.renderViewport(mapX, mapY, 
+            STAGE_WIDTH, STAGE_HEIGHT, 
+            instance.player.x + instance.player.width/2, instance.player.y + instance.player.height/2,
+            instance.enemies);
+
+    instance.spritesLayer.children.sort(function(a, b) {
+      return a.y - b.y;
+    });
+  }
+
+  this.resume = function() {
+    instance.paused = false;
+  }
+
+  this.showDialogue = function(dialogue, cb, timeout) {
+    instance.paused = true;
+    instance.addChild(Dialogue.showDialogue(dialogue, cb || instance.resume, timeout));
+  }
+
+  this.updateEnemies = function() {
+    for (var e=0; e<instance.enemies.length; e++) {
       var ee = instance.enemies[e];
       if (ee.rotating === 0) {
         // move towards target
@@ -227,8 +264,8 @@ function GameManager() {
               dy = (goal[1] - ee.y)/d;
           ee.x += dx * ee.speed;
           ee.y += dy * ee.speed;
-
-	  if (Math.abs(dx) > Math.abs(dy)) {
+  
+          if (Math.abs(dx) > Math.abs(dy)) {
             if (dx > 0) {
               ee.sprite.textures = SpritePool.getTextures(SpritePool.ENEMY1_RIGHT_WALK);
             } else { 
@@ -249,17 +286,17 @@ function GameManager() {
         var dtheta = goal - ee.theta;
         while(dtheta <= -Math.PI) dtheta += 2*Math.PI;
         while(dtheta > Math.PI) dtheta -= 2*Math.PI;
-        if(Math.abs(dtheta) <= ee.omega) {
+        if(Math.abs(dtheta) <= ee.omega_r) {
           ee.theta = goal;
           ee.rotating = 0;
         } else if(dtheta < 0) {
-          ee.theta -= ee.omega;
+          ee.theta -= ee.omega_r;
         } else {
-          ee.theta += ee.omega;
+          ee.theta += ee.omega_r;
         }
 
         var dx = Math.cos(ee.theta), dy = Math.sin(ee.theta);
-	if (Math.abs(dx) > Math.abs(dy)) {
+        if (Math.abs(dx) > Math.abs(dy)) {
           if (dx > 0) {
             ee.sprite.textures = SpritePool.getTextures(SpritePool.ENEMY1_RIGHT_STAND);
           } else { 
@@ -272,12 +309,12 @@ function GameManager() {
             ee.sprite.textures = SpritePool.getTextures(SpritePool.ENEMY1_UP_STAND);
           } 
         }
-      }
+      } 
     }
   }
 
   this.play = function() {
-    this.loadMap(GameManager.maps[2]);
+    instance.loadMap(1);
   }
 }
 GameManager.prototype = Object.create(PIXI.Container.prototype);
@@ -288,5 +325,6 @@ GameManager.maps = [
   "../assets/maps/levelcarolyn.json"
 ];
 GameManager.dialogues = [
-  "../assets/dialogues/tutorial.json"
+  "../assets/dialogues/tutorial.json",
+  "../assets/dialogues/nolicensetowalk.json"
 ];
