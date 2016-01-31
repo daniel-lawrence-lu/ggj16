@@ -81,10 +81,11 @@ function GameManager() {
       instance.gunY = data.gunY * TILE_SIZE + TILE_SIZE / 2;
       instance.gun = SpritePool.getSprite(SpritePool.GUN);
       instance.spritesLayer.addChild(instance.gun);
-      instance.bullets = [];
     } else {
       instance.gun = undefined;
     }
+    instance.hasGun = false;
+    instance.bullets = [];
     
     instance.enemies = data.enemies.slice(0);
     for(var e=0; e<instance.enemies.length; e++) {
@@ -131,22 +132,22 @@ function GameManager() {
         bullet.dy = 0;
         break;
       case DOWN:
-        bullet.sprite.rotation = 90;
+        bullet.sprite.rotation = Math.PI/2;
         bullet.dx = 0;
         bullet.dy = BULLET_V;
         break;
       case RIGHT:
-        bullet.sprite.rotation = 180;
+        bullet.sprite.rotation = Math.PI;
         bullet.dx = BULLET_V;
         bullet.dy = 0;
         break;
       case UP:
-        bullet.sprite.rotation = 270;
+        bullet.sprite.rotation = -Math.PI/2;
         bullet.dx = 0;
         bullet.dy = -BULLET_V;
         break;
     }
-    spriteslayer.addChild(bullet.sprite);
+    instance.spritesLayer.addChild(bullet.sprite);
     instance.bullets.push(bullet);
   }
   
@@ -191,7 +192,7 @@ function GameManager() {
         }
         instance.gunX += gx;
         instance.gunY += gy;
-        if (newDown(Z) && dist2(instance.gunX, instance.gunY, instance.playerX, instance.playerY) < instance.player.width * instance.player.width) {
+        if (newDown(Z) && dist2(instance.gunX, instance.gunY, instance.playerX, instance.playerY) < Math.pow(instance.player.width/2 + instance.gun.width/2, 2)) {
           instance.hasGun = true;
           instance.recharge = 0;
         }
@@ -212,17 +213,17 @@ function GameManager() {
         var bullet = instance.bullets[i];
         bullet.x += bullet.dx;
         bullet.y += bullet.dy;
-        if (Map.isImpassableAt(bullet.x, bullet.y)) {
+        if (instance.map.isImpassableAt(bullet.x, bullet.y)) {
           instance.spritesLayer.removeChild(bullet.sprite);
           instance.bullets.splice(i, 1);
         } else {
           var bb = new PIXI.Rectangle(bullet.x - bullet.sprite.width/2, bullet.y - bullet.sprite.height/2, bullet.sprite.width, bullet.sprite.height);
-          for (var e=instance.enemies.length; e>=0; e--) {
+          for (var e=instance.enemies.length-1; e>=0; e--) {
             var ee = instance.enemies[e];
-            if (bb.contains(ee.x - ee.sprite.width/2, ee.y - ee.sprite.height/2) ||
-                bb.contains(ee.x - ee.sprite.width/2, ee.y + ee.sprite.height/2) ||
-                bb.contains(ee.x + ee.sprite.width/2, ee.y - ee.sprite.height/2) ||
-                bb.contains(ee.x + ee.sprite.width/2, ee.y + ee.sprite.height/2)) {
+            if (bb.contains(ee.x - ee.sprite.width/2 + 5, ee.y - ee.sprite.height/2 + 5) ||
+                bb.contains(ee.x - ee.sprite.width/2 + 5, ee.y + ee.sprite.height/2 - 5) ||
+                bb.contains(ee.x + ee.sprite.width/2 - 5, ee.y - ee.sprite.height/2 + 5) ||
+                bb.contains(ee.x + ee.sprite.width/2 - 5, ee.y + ee.sprite.height/2 - 5)) {
               instance.spritesLayer.removeChild(bullet.sprite);
               instance.bullets.splice(i, 1);
               instance.spritesLayer.removeChild(ee.sprite);
@@ -431,6 +432,7 @@ function GameManager() {
         var dtheta = goal - ee.theta;
         while(dtheta <= -Math.PI) dtheta += 2*Math.PI;
         while(dtheta > Math.PI) dtheta -= 2*Math.PI;
+        if (ee.keypoints.length == 1) dtheta = 1000;
         if(Math.abs(dtheta) <= ee.omega_r) {
           ee.theta = goal;
           ee.rotating = 0;
@@ -466,6 +468,7 @@ GameManager.prototype = Object.create(PIXI.Container.prototype);
 GameManager.prototype.constructor = GameManager;
 GameManager.maps = [
   "../assets/maps/tutorial.json",
+  "../assets/maps/level1.json",
   "../assets/maps/level2.json",
   "../assets/maps/levelcarolyn.json"
 ];

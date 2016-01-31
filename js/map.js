@@ -62,6 +62,7 @@ function Map(map) {
           }
         } else {
           sprite = SpritePool.getSprite(Map.tiles[this.map[r][c]][0]);
+          sprite.rotation = Map.tiles[this.map[r][c]][1] * Math.PI / 180;
         }
         sprite.x = tileX + TILE_SIZE/2;
         sprite.y = tileY + TILE_SIZE/2;
