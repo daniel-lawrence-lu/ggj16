@@ -1,7 +1,7 @@
 var LEFT = 37, UP = 38, RIGHT = 39, DOWN = 40;
 var Z = 90, X = 88, Q = 81;
 var PLAYER_V = 7;
-var ENEMY_OMEGA = 3, ENEMY_V = 0.1;
+var ENEMY_OMEGA = 3, ENEMY_V = 6;
 var GUN_RECHARGE = 10, BULLET_V = 20;
 function GameManager() {
   PIXI.Container.call(this);
