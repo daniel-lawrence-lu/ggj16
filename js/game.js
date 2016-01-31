@@ -3,7 +3,7 @@ var STAGE_HEIGHT = 480;
 var UI_HEIGHT = 160;
 var APP_WIDTH = STAGE_WIDTH;
 var APP_HEIGHT = STAGE_HEIGHT + UI_HEIGHT;
-var renderer = PIXI.autoDetectRenderer(APP_WIDTH, APP_HEIGHT, {backgroundColor : 0xFFFF00});
+var renderer = PIXI.autoDetectRenderer(APP_WIDTH, APP_HEIGHT, {backgroundColor : 0xFFFF00}, false, true);
 document.body.appendChild(renderer.view);
 
 // create the root of the scene graph

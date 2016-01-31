@@ -254,7 +254,7 @@ Map.preload = function(progressCb, doneCb) {
           sprite = new PIXI.Sprite(frames[0]);
         } else {
           sprite = new PIXI.extras.MovieClip(frames);
-          sprite.animationSpeed = 0.2;
+          sprite.animationSpeed = 2;
           sprite.play();
         }
         sprite.anchor = new PIXI.Point(0.5, 0.5);
