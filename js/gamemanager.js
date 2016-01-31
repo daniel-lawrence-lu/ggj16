@@ -160,6 +160,13 @@ function GameManager() {
     SpritePool.resetSprites();
 
     var data = PIXI.loader.resources[map].data;
+    if(data.tileSize !== undefined) {
+      TILE_SIZE = data.tileSize;
+      MAX_TILES = (Math.ceil(STAGE_WIDTH / TILE_SIZE) + 1) * (Math.ceil(STAGE_HEIGHT / TILE_SIZE) + 1);
+    } else {
+      TILE_SIZE = TILE_SIZE_DEFAULT;
+      MAX_TILES = (Math.ceil(STAGE_WIDTH / TILE_SIZE) + 1) * (Math.ceil(STAGE_HEIGHT / TILE_SIZE) + 1);
+    }
     instance.map = new Map(data.map);
     instance.addChild(instance.map);
 
@@ -270,14 +277,15 @@ function GameManager() {
   }
 
   this.play = function() {
-    this.loadMap(GameManager.maps[1]);
+    this.loadMap(GameManager.maps[2]);
   }
 }
 GameManager.prototype = Object.create(PIXI.Container.prototype);
 GameManager.prototype.constructor = GameManager;
 GameManager.maps = [
   "../assets/maps/tutorial.json",
-  "../assets/maps/level1.json"
+  "../assets/maps/level1.json",
+  "../assets/maps/levelcarolyn.json"
 ];
 GameManager.dialogues = [
   "../assets/dialogues/tutorial.json"
