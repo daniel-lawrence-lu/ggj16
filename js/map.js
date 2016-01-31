@@ -110,8 +110,8 @@ function Map(map) {
     this.addChild(lightPolygon);
   }
   this.drawVisibilityPolygonEnemy = function(enemy, x, y, width, height) {
-    var eX = enemy.x * TILE_SIZE - x + TILE_SIZE/2, eY = enemy.y * TILE_SIZE - y + TILE_SIZE/2,
-      eT = enemy.theta, eR = enemy.radius, eF = enemy.fov * Math.PI / 180;
+    var eX = enemy.x * TILE_SIZE + TILE_SIZE/2 - x, eY = enemy.y * TILE_SIZE + TILE_SIZE/2 - y,
+      eT = enemy.theta, eR = enemy.radius, eF = enemy.fov_r;
     if(eX < -eR || eY < -eR || eX > width + eR || eY > height + eR) {
       return;
     }
@@ -187,6 +187,9 @@ function Map(map) {
     lightPolygon.endFill();
 
     lightPolygon.beginFill(0x220000);
+    if (enemy.detected) {
+      lightPolygon.beginFill(0xFF0000);
+    }    
     lightPolygon.drawPolygon(wedge);
     lightPolygon.endFill();
     this.addChild(lightPolygon);

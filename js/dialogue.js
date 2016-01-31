@@ -1,13 +1,14 @@
-function Dialogue() {
+function Dialogue(data, doneCb) {
   PIXI.Container.call(this);
 
   var instance = this;
-  instance.text = new PIXI.Text("", {fill: 0x0000FF});
+  instance.text = new PIXI.Text("", {fill: 0x0000FF, wordWrap: true, wordWrapWidth: APP_WIDTH});
   instance.addChild(instance.text);
 
   instance.content = [];
   instance.page = -1;
-  instance.doneCb = function(){};
+  instance.doneCb = doneCb;
+
   instance.advance = function() {
     instance.page++;
     if (instance.page >= instance.content.length) {
@@ -28,27 +29,19 @@ function Dialogue() {
     }
   }
 
-  instance.setData = function(data, doneCb) {
-    instance.x = data.x;
-    instance.y = data.y;
-    instance.content = data.content;
-    instance.page = -1;
-    instance.doneCb = doneCb;
+  instance.x = data.x;
+  instance.y = data.y;
+  instance.content = data.content;
+  instance.page = -1;
 
-    window.addEventListener("mousedown", checkKey);
-    window.addEventListener("keydown", checkKey);
+  window.addEventListener("mousedown", checkKey);
+  window.addEventListener("keydown", checkKey);
 
-    instance.advance();
-  }
+  instance.advance();
 }
 Dialogue.prototype = Object.create(PIXI.Container.prototype);
 Dialogue.prototype.constructor = Dialogue;
 Dialogue.showDialogue = function(json, doneCb) {
-  var d = new Dialogue();
-  var dialogueLoaded = function() {
-    var data = PIXI.loader.resources[json].data;
-    d.setData(data, doneCb);
-  }
-  return d;
+  return new Dialogue(PIXI.loader.resources[json].data, doneCb);
 }
 
