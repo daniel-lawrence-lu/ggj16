@@ -15,6 +15,7 @@ SpritePool.ENEMY1_LEFT_STAND = 11;
 SpritePool.ENEMY1_RIGHT_WALK = 12;
 SpritePool.ENEMY1_RIGHT_STAND = 13;
 
+
 // FORMAT: [path, frames, max_instances (0 to cache texture only)]
 SpritePool.METADATA = [];
 var MAX_TILES = Math.max(1000, (Math.ceil(STAGE_WIDTH / TILE_SIZE) + 1) * (Math.ceil(STAGE_HEIGHT / TILE_SIZE) + 1));
@@ -32,6 +33,15 @@ SpritePool.METADATA[SpritePool.ENEMY1_LEFT_WALK] = ["../assets/img/human.png", r
 SpritePool.METADATA[SpritePool.ENEMY1_LEFT_STAND] = ["../assets/img/human.png", [7], 0];
 SpritePool.METADATA[SpritePool.ENEMY1_RIGHT_WALK] = ["../assets/img/human.png", repeatEach([10, 11, 12, 13, 12, 11], 8), 0]; 
 SpritePool.METADATA[SpritePool.ENEMY1_RIGHT_STAND] = ["../assets/img/human.png", [11], 0];
+
+SpritePool.WALLS = [];
+SpritePool.WALL2S = [];
+for(var w=0; w<16; w++) {
+    SpritePool.WALLS[w] = 14 + w;
+    SpritePool.METADATA[SpritePool.WALLS[w]] = ["../assets/img/wall.png", [w], MAX_TILES];
+    SpritePool.WALL2S[w] = 30 + w;
+    SpritePool.METADATA[SpritePool.WALL2S[w]] = ["../assets/img/wall2.png", [w], MAX_TILES];
+}
 
 SpritePool.texturePool = {};
 SpritePool.pool = {};
