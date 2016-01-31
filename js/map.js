@@ -65,8 +65,19 @@ function Map(map) {
         }
       }
     }
+    obstacleSegments.push([[0, 0], [width, 0]]);
+    obstacleSegments.push([[0, height], [width, height]]);
+    obstacleSegments.push([[0, 0], [0, height]]);
+    obstacleSegments.push([[width, 0], [width, height]]);
+    obstacleSegments = VisibilityPolygon.breakIntersections(obstacleSegments);
+
+
+    for(var e=0; e<enemies.length; e++) {
+      this.drawVisibilityPolygonEnemy(enemies[e], x, y, width, height);
+    }
 
     //*
+    /*/
     for(var i=0; i<obstacleSegments.length; i++) {
       // draw segments used in visibility polygon calculation
       var seg = new PIXI.Graphics();
@@ -79,15 +90,11 @@ function Map(map) {
     }
     //*/
 
-    for(var e=0; e<enemies.length; e++) {
-      this.drawVisibilityPolygonEnemy(enemies[e], x, y, width, height);
-    }
-
     var visibilityPolygonByronFormat = VisibilityPolygon.compute(
         [playerX, playerY], // viewer position
         obstacleSegments,
-        [0, 0], // viewport min corner
-        [width, height] // viewport max corner
+        [-1e4, -1e4], // viewport min corner
+        [1e4, 1e4] // viewport max corner
         );
     var visibilityPolygonPIXIFormat = [];
     for(var i = 0; i < visibilityPolygonByronFormat.length; i++) {
@@ -97,6 +104,7 @@ function Map(map) {
 
     var lightPolygon = new PIXI.Graphics();
     lightPolygon.blendMode = PIXI.BLEND_MODES.ADD;
+    //lightPolygon.lineStyle(3, 0xff00ff, 1);
     lightPolygon.beginFill(0x444444);
     lightPolygon.drawPolygon(visibilityPolygonPIXIFormat);
     lightPolygon.endFill();
@@ -105,6 +113,9 @@ function Map(map) {
   this.drawVisibilityPolygonEnemy = function(enemy, x, y, width, height) {
     var eX = enemy.x * TILE_SIZE - x + TILE_SIZE/2, eY = enemy.y * TILE_SIZE - y + TILE_SIZE/2,
       eT = enemy.theta, eR = enemy.radius, eF = enemy.fov * Math.PI / 180;
+    if(eX < -eR || eY < -eR || eX > width + eR || eY > height + eR) {
+      return;
+    }
     var x0 = eX - 1 * Math.cos(eT), y0 = eY - 1 * Math.sin(eT);
     var obstaclePolygon = [[x0, y0]];
     var wedge = [x0, y0];
