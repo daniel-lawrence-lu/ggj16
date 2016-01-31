@@ -14,3 +14,20 @@ function dist2(x1, y1, x2, y2) {
 function sign(x) {
   return x ? x < 0 ? -1 : 1 : 0;
 }
+function range(left, right_excl) {
+  var ret = [];
+  for (var i=left; i < right_excl; i++) {
+    ret.push(i);
+  }
+  return ret;
+}
+
+function repeatEach(arr, x) {
+  var ret = [];
+  for (var i=0; i < arr.length; i++) {
+    for (var j=0; j < x; j++) {
+      ret.push(arr[i]);
+    }
+  }
+  return ret;
+}
