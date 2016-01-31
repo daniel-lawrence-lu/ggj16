@@ -97,7 +97,7 @@ function GameManager() {
         if (nx != instance.playerX) instance.playerX = alignedx;
         if (ny != instance.playerY) instance.playerY = alignedy;
       }
-      this.updateEnemies();
+      this.updateEnemies(dt);
     } // if (instance.paused)
       
     // offset the view if the player is scrolling to the edge of the map
@@ -187,7 +187,7 @@ function GameManager() {
     PIXI.ticker.shared.add(gameLoop, instance);
   }
 
-  this.updateEnemies = function() {
+  this.updateEnemies = function(dt) {
     for(var e=0; e<instance.enemies.length; e++) {
       var ee = instance.enemies[e];
       if(ee.rotating === 0) {

@@ -76,7 +76,6 @@ function Map(map) {
       this.drawVisibilityPolygonEnemy(enemies[e], x, y, width, height);
     }
 
-    //*
     /*/
     for(var i=0; i<obstacleSegments.length; i++) {
       // draw segments used in visibility polygon calculation
