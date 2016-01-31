@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en"> <head>
+<meta charset="utf-8">
+<meta name="description" content="Global Game Jam 2016">
+<meta name="author" content="Scotty">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+html, body {
+    margin: 0;
+}
+.cell {
+    display: block;
+    width: 62px;
+    height: 62px;
+    border: 1px solid #555555;
+    position: absolute;
+}
+.cell:hover {
+    border: 1px solid #ff0000;
+    padding: 0px;
+    opacity: 0.9;
+}
+.cell.type0 {
+    background: url('../assets/img/ground.png') top left no-repeat;
+}
+.cell.type1 {
+    background: url('../assets/img/wall.png') top left repeat;
+}
+.cell.type2 {
+    background: url('../assets/img/conveyor.png') top left no-repeat;
+}
+.cell.type3 {
+    background: url('../assets/img/conveyor.png') top left no-repeat;
+    -webkit-transform: rotate(90deg);
+    transform: rotate(90deg);
+}
+.cell.type4 {
+    background: url('../assets/img/conveyor.png') top left no-repeat;
+    -webkit-transform: rotate(180deg);
+    transform: rotate(180deg);
+}
+.cell.type5 {
+    background: url('../assets/img/conveyor.png') top left no-repeat;
+    -webkit-transform: rotate(270deg);
+    transform: rotate(270deg);
+}
+
+#map{
+    position: absolute;
+    top: 184px;
+    left: 0px;
+}
+#toolbar {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    z-index: 999;
+    height: 84px;
+    width: 100vw;
+    background-color: #fe0;
+}
+#toolbar .cell {
+    margin: 10px;
+}
+#toolbar .cell.selected {
+    margin: 0px;
+    border: 11px solid #f00;
+}
+#json {
+    position: fixed;
+    top: 84px;
+    left: 0px;
+    height: 100px;
+    width: 100vw;
+    background: #111;
+}
+#lejson {
+    font-family: monospace;
+    color: #0f0;
+    whitespace: pre-wrap;
+    width: 100vw;
+    height: 100px;
+    background: #111;
+}
+#coord {
+    position: fixed;
+    bottom: 0px;
+    right: 0px;
+    font-size: 50px;
+    font-weight: bold;
+    font-family: sans-serif;
+    color: #fff;
+    background: rgba(0,0,0,0.8);
+    z-index: 999;
+}
+</style>
+</head>
+<title>Global Game Jam 2016</title>
+<body>
+<script src="../js/pixi.min.js"></script>
+<script src="../js/utility.js"></script>
+<div id="coord"></div>
+<div id="json"><textarea id="lejson"></textarea></div>
+<div id="toolbar"></div>
+<div id="map"></div>
+<script>
+var TILE_SIZE = 64;
+var types = 6;
+var map = [];
+var lemode = 0;
+var tools = [];
+
+
+for(var i=0; i<types; i++) {
+    var zxcv = document.createElement('div');
+    zxcv.style.left = i*(20+TILE_SIZE)+'px';
+    zxcv.className = 'cell type' + i;
+    zxcv.onclick = function(evt) {
+        var letype = parseInt(this.className.split(' ')[1][4]);
+        lemode = letype;
+        for(var j=0; j<types; j++) {
+            tools[j].className = 'cell type' + j;
+        }
+        this.className = this.className + ' selected';
+    }
+    tools.push(zxcv);
+    document.getElementById('toolbar').appendChild(zxcv);
+}
+tools[0].className = tools[0].className + ' selected';
+
+for(var i=0; i<100; i++) {
+    map.push([]);
+
+    for(var j=0; j<100; j++) {
+        var zxcv = document.createElement('div');
+        zxcv.style.top = i*TILE_SIZE+'px';
+        zxcv.style.left = j*TILE_SIZE+'px';
+        zxcv.className = 'cell type0';
+        zxcv.dataset.x = j;
+        zxcv.dataset.y = i;
+        zxcv.onmouseover = function(evt) {
+            document.getElementById('coord').innerHTML = this.dataset.x + ',' + this.dataset.y;
+        }
+        zxcv.onclick = function(evt) {
+
+            var letype = parseInt(this.className.split(' ')[1][4]);
+            var leoldtype = letype;
+            letype = lemode;
+            this.className = this.className.replace('type'+leoldtype, 'type'+letype);
+            console.log(this.className);
+            map[this.dataset.y][this.dataset.x] = letype;
+            document.getElementById('lejson').value = JSON.stringify(map);
+        }
+        document.getElementById('map').appendChild(zxcv);
+        map[i].push(0);
+    }
+}
+document.getElementById('lejson').onkeyup = function() {
+    document.getElementById('map').innerHTML = '';
+    var map = JSON.parse(document.getElementById('lejson').value);
+    for(var i=0; i<map.length; i++) {
+        for(var j=0; j<map[i].length; j++) {
+            var zxcv = document.createElement('div');
+            zxcv.style.top = i*TILE_SIZE+'px';
+            zxcv.style.left = j*TILE_SIZE+'px';
+            zxcv.className = 'cell type' + map[i][j];
+            zxcv.dataset.x = j;
+            zxcv.dataset.y = i;
+            zxcv.onmouseover = function(evt) {
+                document.getElementById('coord').innerHTML = this.dataset.x + ',' + this.dataset.y;
+            }
+            zxcv.onclick = function(evt) {
+
+                var letype = parseInt(this.className.split(' ')[1][4]);
+                var leoldtype = letype;
+                letype = lemode;
+                this.className = this.className.replace('type'+leoldtype, 'type'+letype);
+                console.log(this.className);
+                map[this.dataset.y][this.dataset.x] = letype;
+                document.getElementById('lejson').value = JSON.stringify(map);
+            }
+            document.getElementById('map').appendChild(zxcv);
+        }
+    }
+}
+</script>
+</body>
+</html>

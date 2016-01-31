@@ -17,7 +17,7 @@ SpritePool.ENEMY1_RIGHT_STAND = 13;
 
 // FORMAT: [path, frames, max_instances (0 to cache texture only)]
 SpritePool.METADATA = [];
-var MAX_TILES = (Math.ceil(STAGE_WIDTH / TILE_SIZE) + 1) * (Math.ceil(STAGE_HEIGHT / TILE_SIZE) + 1);
+var MAX_TILES = Math.max(1000, (Math.ceil(STAGE_WIDTH / TILE_SIZE) + 1) * (Math.ceil(STAGE_HEIGHT / TILE_SIZE) + 1));
 SpritePool.METADATA[SpritePool.GROUND] = ["../assets/img/ground.png", [0], MAX_TILES]; 
 SpritePool.METADATA[SpritePool.WALL] = ["../assets/img/wall.png", [0], MAX_TILES]; 
 SpritePool.METADATA[SpritePool.CONVEYOR] = ["../assets/img/conveyor.png", range(0, 32), MAX_TILES]; 
