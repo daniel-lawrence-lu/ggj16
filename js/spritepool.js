@@ -20,6 +20,7 @@ SpritePool.WALK_LICENSE_SIGN_RIGHT = 16;
 SpritePool.GUN = 17;
 SpritePool.BULLET = 18;
 
+
 // FORMAT: [path, frames, max_instances (0 to cache texture only)]
 SpritePool.METADATA = [];
 var MAX_TILES = Math.max(1000, (Math.ceil(STAGE_WIDTH / TILE_SIZE) + 1) * (Math.ceil(STAGE_HEIGHT / TILE_SIZE) + 1));
@@ -42,6 +43,15 @@ SpritePool.METADATA[SpritePool.WALK_LICENSE_SIGN_LEFT] = ["../assets/img/walk_li
 SpritePool.METADATA[SpritePool.WALK_LICENSE_SIGN_RIGHT] = ["../assets/img/walk_license_sign.png", [1], 1]; 
 SpritePool.METADATA[SpritePool.GUN] = ["../assets/img/gun.png", [0], 1]; 
 SpritePool.METADATA[SpritePool.BULLET] = ["../assets/img/bullet.png", [0], 500]; 
+
+SpritePool.WALLS = [];
+SpritePool.WALL2S = [];
+for(var w=0; w<16; w++) {
+    SpritePool.WALLS[w] = 19 + w;
+    SpritePool.METADATA[SpritePool.WALLS[w]] = ["../assets/img/wall.png", [w], MAX_TILES];
+    SpritePool.WALL2S[w] = 35 + w;
+    SpritePool.METADATA[SpritePool.WALL2S[w]] = ["../assets/img/wall2.png", [w], MAX_TILES];
+}
 
 SpritePool.texturePool = {};
 SpritePool.pool = {};

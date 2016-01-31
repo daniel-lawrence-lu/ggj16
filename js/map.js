@@ -20,6 +20,8 @@ function Map(map) {
     return this.isImpassable(this.getTile(x, y));
   }
   this.renderViewport = function(x, y, width, height, playerX, playerY, enemies) {
+    x = ~~x;
+    y = ~~y;
     this.removeChildren();
     Map.spritePoolIdx = {};
     var obstacleSegments = [];
@@ -31,12 +33,40 @@ function Map(map) {
           c++) {
         var tileX = c * TILE_SIZE - x, tileY = r * TILE_SIZE - y;
         
-        var sprite = SpritePool.getSprite(Map.tiles[this.map[r][c]][0]);
-	sprite.x = tileX + TILE_SIZE/2;
+        var tileType = Map.tiles[this.map[r][c]][0];
+        var sprite;
+        if(tileType === SpritePool.WALL) {
+          // wall
+          var dx = [1, 0, -1, 0];
+          var dy = [0, 1, 0, -1];
+          var idx = 0;
+          for(var j=0; j<4; j++) {
+            var xx = c + dx[j], yy = r + dy[j];
+            if(xx < 0 || xx >= this.map[0].length || yy < 0 || yy >= this.map.length || Map.tiles[this.map[yy][xx]][0] !== SpritePool.WALL) {
+              idx |= (1 << j);
+            }
+          }
+          if(idx === 0) {
+            dx = [1, -1, -1, 1];
+            dy = [1, 1, -1, -1];
+            idx = 0;
+            for(var j=0; j<4; j++) {
+              var xx = c + dx[j], yy = r + dy[j];
+              if(xx < 0 || xx >= this.map[0].length || yy < 0 || yy >= this.map.length || Map.tiles[this.map[yy][xx]][0] !== SpritePool.WALL) {
+                idx |= (1 << j);
+              }
+            }
+            sprite = SpritePool.getSprite(SpritePool.WALL2S[idx]);
+          } else {
+            sprite = SpritePool.getSprite(SpritePool.WALLS[idx]);
+          }
+        } else {
+          sprite = SpritePool.getSprite(Map.tiles[this.map[r][c]][0]);
+        }
+        sprite.x = tileX + TILE_SIZE/2;
         sprite.y = tileY + TILE_SIZE/2;
         sprite.width = TILE_SIZE;
         sprite.height = TILE_SIZE;
-        sprite.rotation = Map.tiles[this.map[r][c]][1] * Math.PI / 180;
         this.addChild(sprite);
 
         if(this.isImpassable(this.map[r][c])) {
