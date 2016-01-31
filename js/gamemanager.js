@@ -1,5 +1,5 @@
 var LEFT = 37, UP = 38, RIGHT = 39, DOWN = 40;
-var ENEMY_OMEGA = 5, ENEMY_V = 0.5;
+var ENEMY_OMEGA = 3, ENEMY_V = 0.1;
 function GameManager() {
   PIXI.Container.call(this);
 
@@ -8,8 +8,9 @@ function GameManager() {
   instance.player = {};
   instance.playerX = 0;
   instance.playerY = 0;
-  instance.playerV = 15;
+  instance.playerV = 7;
   instance.map = {};
+  instance.spritesLayer = {};
   instance.isDown = [];
   instance.state = {};
 
@@ -120,18 +121,28 @@ function GameManager() {
     mapY -= viewOffsetY;
 
     if (dy > 0) {
-      instance.player.texture = SpritePool.getTextures(SpritePool.PLAYER_DOWN);
+      instance.player.texture = SpritePool.getTexture(SpritePool.PLAYER_DOWN);
     } else if (dy < 0) {
-      instance.player.texture = SpritePool.getTextures(SpritePool.PLAYER_UP);
+      instance.player.texture = SpritePool.getTexture(SpritePool.PLAYER_UP);
     } else if (dx != 0) {
-      instance.player.texture = SpritePool.getTextures(SpritePool.PLAYER_SIDE);
+      instance.player.texture = SpritePool.getTexture(SpritePool.PLAYER_SIDE);
     } 
     instance.player.x = (STAGE_WIDTH - instance.player.width)/2 + viewOffsetX;
     instance.player.y = (STAGE_HEIGHT - instance.player.height)/2 + viewOffsetY;
+
+    for(var e=0; e<instance.enemies.length; e++) {
+      var ee = instance.enemies[e];
+      ee.sprite.x = ee.x * TILE_SIZE - instance.playerX + instance.player.x;
+      ee.sprite.y = ee.y * TILE_SIZE - instance.playerY + instance.player.y;
+    }
     instance.map.renderViewport(mapX, mapY, 
             STAGE_WIDTH, STAGE_HEIGHT, 
             instance.player.x + instance.player.width/2, instance.player.y + instance.player.height/2,
             instance.enemies);
+
+    instance.spritesLayer.children.sort(function(a, b) {
+      return a.y - b.y;
+    });
   }
 
   this.resume = function() {
@@ -146,24 +157,31 @@ function GameManager() {
   this.loadMap = function(map) {
     PIXI.ticker.shared.remove(gameLoop, instance);
     instance.removeChildren();
+    SpritePool.resetSprites();
 
     var data = PIXI.loader.resources[map].data;
     instance.map = new Map(data.map);
     instance.addChild(instance.map);
 
-    instance.playerX = data.playerX * TILE_SIZE + TILE_SIZE / 2;
-    instance.playerY = data.playerY * TILE_SIZE + TILE_SIZE / 2;
-    instance.player = new PIXI.Sprite(SpritePool.getTextures(SpritePool.PLAYER_DOWN));
-    instance.player.scale = new PIXI.Point(0.5, 0.5);
-    instance.addChild(instance.player);
+    instance.spritesLayer = new PIXI.Container();
+    instance.addChild(instance.spritesLayer);
     
     var ui = new UI();
     ui.y = STAGE_HEIGHT;
     instance.addChild(ui);
+
+    instance.playerX = data.playerX * TILE_SIZE + TILE_SIZE / 2;
+    instance.playerY = data.playerY * TILE_SIZE + TILE_SIZE / 2;
+    instance.player = new PIXI.Sprite(SpritePool.getTexture(SpritePool.PLAYER_DOWN));
+    instance.player.scale = new PIXI.Point(0.5, 0.5);
+    instance.spritesLayer.addChild(instance.player);
     
     instance.enemies = data.enemies;
     for(var e=0; e<instance.enemies.length; e++) {
       var ee = instance.enemies[e];
+      ee.sprite = new PIXI.extras.MovieClip(SpritePool.getTextures(SpritePool.ENEMY1_DOWN_STAND));
+      ee.sprite.play();
+      instance.spritesLayer.addChild(ee.sprite);
       ee.x = ee.keypoints[0][0];
       ee.y = ee.keypoints[0][1];
       ee.k = 0; // which keypoint the ee is at
@@ -190,7 +208,7 @@ function GameManager() {
   this.updateEnemies = function() {
     for(var e=0; e<instance.enemies.length; e++) {
       var ee = instance.enemies[e];
-      if(ee.rotating === 0) {
+      if (ee.rotating === 0) {
         // move towards target
         var goal = ee.keypoints[(ee.k+1) % ee.keypoints.length];
         var d = Math.sqrt(dist2(ee.x, ee.y, goal[0], goal[1]));
@@ -202,8 +220,23 @@ function GameManager() {
               dy = (goal[1] - ee.y)/d;
           ee.x += dx * ee.speed;
           ee.y += dy * ee.speed;
+
+	  if (Math.abs(dx) > Math.abs(dy)) {
+            if (dx > 0) {
+              ee.sprite.textures = SpritePool.getTextures(SpritePool.ENEMY1_RIGHT_WALK);
+            } else { 
+              ee.sprite.textures = SpritePool.getTextures(SpritePool.ENEMY1_LEFT_WALK);
+            }
+          } else {
+            if (dy > 0) {
+              ee.sprite.textures = SpritePool.getTextures(SpritePool.ENEMY1_DOWN_WALK);
+            } else {
+              ee.sprite.textures = SpritePool.getTextures(SpritePool.ENEMY1_UP_WALK);
+            }
+          }
         }
-      } else {
+      } 
+      if (ee.rotating) {
         // rotate towards target
         var goal = ee.keypoints[ee.k][2] * Math.PI / 180;
         var dtheta = goal - ee.theta;
@@ -216,6 +249,21 @@ function GameManager() {
           ee.theta -= ee.omega;
         } else {
           ee.theta += ee.omega;
+        }
+
+        var dx = Math.cos(ee.theta), dy = Math.sin(ee.theta);
+	if (Math.abs(dx) > Math.abs(dy)) {
+          if (dx > 0) {
+            ee.sprite.textures = SpritePool.getTextures(SpritePool.ENEMY1_RIGHT_STAND);
+          } else { 
+            ee.sprite.textures = SpritePool.getTextures(SpritePool.ENEMY1_LEFT_STAND);
+          }
+        } else {
+          if (dy > 0) {
+            ee.sprite.textures = SpritePool.getTextures(SpritePool.ENEMY1_DOWN_STAND);
+          } else {
+            ee.sprite.textures = SpritePool.getTextures(SpritePool.ENEMY1_UP_STAND);
+          } 
         }
       }
     }
