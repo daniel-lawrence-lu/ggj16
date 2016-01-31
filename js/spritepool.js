@@ -47,9 +47,9 @@ SpritePool.METADATA[SpritePool.BULLET] = ["../assets/img/bullet.png", [0], 500];
 SpritePool.WALLS = [];
 SpritePool.WALL2S = [];
 for(var w=0; w<16; w++) {
-    SpritePool.WALLS[w] = 14 + w;
+    SpritePool.WALLS[w] = 19 + w;
     SpritePool.METADATA[SpritePool.WALLS[w]] = ["../assets/img/wall.png", [w], MAX_TILES];
-    SpritePool.WALL2S[w] = 30 + w;
+    SpritePool.WALL2S[w] = 35 + w;
     SpritePool.METADATA[SpritePool.WALL2S[w]] = ["../assets/img/wall2.png", [w], MAX_TILES];
 }
 
