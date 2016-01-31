@@ -13,7 +13,7 @@ function Dialogue(data, doneCb, timeout) {
     window.removeEventListener("mousedown", checkKey);
     window.removeEventListener("keydown", checkKey);
     instance.parent.removeChild(instance);
-    instance.doneCb();
+    if (instance.doneCb) instance.doneCb();
   }
 
   instance.advance = function() {

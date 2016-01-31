@@ -117,6 +117,10 @@ function GameManager() {
 
     instance.resume();
     PIXI.ticker.shared.add(gameLoop, instance);
+
+    if (map == 3) {
+      instance.showDialogue(GameManager.dialogues[6]);
+    } 
   }
 
   instance.fireBullet = function(x, y, facing) {
@@ -217,13 +221,13 @@ function GameManager() {
           instance.spritesLayer.removeChild(bullet.sprite);
           instance.bullets.splice(i, 1);
         } else {
-          var bb = new PIXI.Rectangle(bullet.x - bullet.sprite.width/2, bullet.y - bullet.sprite.height/2, bullet.sprite.width, bullet.sprite.height);
           for (var e=instance.enemies.length-1; e>=0; e--) {
             var ee = instance.enemies[e];
-            if (bb.contains(ee.x - ee.sprite.width/2 + 5, ee.y - ee.sprite.height/2 + 5) ||
-                bb.contains(ee.x - ee.sprite.width/2 + 5, ee.y + ee.sprite.height/2 - 5) ||
-                bb.contains(ee.x + ee.sprite.width/2 - 5, ee.y - ee.sprite.height/2 + 5) ||
-                bb.contains(ee.x + ee.sprite.width/2 - 5, ee.y + ee.sprite.height/2 - 5)) {
+            var bb = new PIXI.Rectangle(ee.x - ee.sprite.width/2 + 5, ee.y - ee.sprite.height/2 + 5, ee.sprite.width - 10, ee.sprite.height - 10);
+            if (bb.contains(bullet.x - bullet.sprite.width/2, bullet.y - bullet.sprite.height/2) ||
+                bb.contains(bullet.x - bullet.sprite.width/2, bullet.y + bullet.sprite.height/2) ||
+                bb.contains(bullet.x + bullet.sprite.width/2, bullet.y - bullet.sprite.height/2) ||
+                bb.contains(bullet.x + bullet.sprite.width/2, bullet.y + bullet.sprite.height/2)) {
               instance.spritesLayer.removeChild(bullet.sprite);
               instance.bullets.splice(i, 1);
               instance.spritesLayer.removeChild(ee.sprite);
@@ -380,6 +384,13 @@ function GameManager() {
     if (instance.state["level"] == 1 && instance.map.getTile(instance.playerX, instance.playerY) == Map.WALK_LICENSE) {
       instance.state["canwalk"] = true;
       instance.showDialogue(GameManager.dialogues[3], instance.loadMap.bind(instance, 2));
+    } else if (instance.state["level"] == 2 && instance.map.getTile(instance.playerX, instance.playerY) == Map.GUN_LICENSE) {
+      if (instance.hasGun) {
+        instance.state["canholdgun"] = true;
+        instance.showDialogue(GameManager.dialogues[4], instance.loadMap.bind(instance, 3));
+      } else {
+        instance.showDialogueWithoutPause(GameManager.dialogues[5], 1000);
+      }
     }
 
     instance.newDown = [];
@@ -392,6 +403,10 @@ function GameManager() {
   this.showDialogue = function(dialogue, cb, timeout) {
     instance.paused = true;
     instance.addChild(Dialogue.showDialogue(dialogue, cb || instance.resume, timeout));
+  }
+  
+  this.showDialogueWithoutPause = function(dialogue, timeout) {
+    instance.addChild(Dialogue.showDialogue(dialogue, undefined, timeout));
   }
 
   this.updateEnemies = function() {
@@ -477,5 +492,8 @@ GameManager.dialogues = [
   "../assets/dialogues/tutorial.json",
   "../assets/dialogues/nolicensetowalk.json",
   "../assets/dialogues/nogunlicense.json",
-  "../assets/dialogues/walklicenseobtained.json"
+  "../assets/dialogues/walklicenseobtained.json",
+  "../assets/dialogues/gunlicenseobtained.json",
+  "../assets/dialogues/needgunforlicense.json",
+  "../assets/dialogues/gamewin.json"
 ];
