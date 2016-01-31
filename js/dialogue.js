@@ -1,4 +1,4 @@
-function Dialogue(data, doneCb) {
+function Dialogue(data, doneCb, timeout) {
   PIXI.Container.call(this);
 
   var instance = this;
@@ -9,39 +9,53 @@ function Dialogue(data, doneCb) {
   instance.page = -1;
   instance.doneCb = doneCb;
 
+  instance.close = function() {
+    window.removeEventListener("mousedown", checkKey);
+    window.removeEventListener("keydown", checkKey);
+    instance.parent.removeChild(instance);
+    instance.doneCb();
+  }
+
   instance.advance = function() {
     instance.page++;
     if (instance.page >= instance.content.length) {
-      window.removeEventListener("mousedown", checkKey);
-      window.removeEventListener("keydown", checkKey);
-      instance.parent.removeChild(instance);
-      instance.doneCb();
+      instance.close();
       return;
     }
     instance.text.text = instance.content[instance.page];
   }
-
-  var checkKey = function(evt) {
-    if (evt.altKey || evt.metaKey || evt.ctrlKey) return;
-    if (evt.button == 0 || evt.keyCode == 32 /*space*/ || evt.keyCode == 13 /*enter*/) {
-      instance.advance();
-      evt.preventDefault(); 
-    }
-  }
-
+  
   instance.x = data.x;
   instance.y = data.y;
   instance.content = data.content;
   instance.page = -1;
 
-  window.addEventListener("mousedown", checkKey);
-  window.addEventListener("keydown", checkKey);
+  if(timeout) {
+    setTimeout(instance.close, timeout);
+  } else {
+    var checkKey = function(evt) {
+      if (evt.altKey || evt.metaKey || evt.ctrlKey) return;
+      if (evt.button == 0 || evt.keyCode == 32 /*space*/ || evt.keyCode == 13 /*enter*/) {
+        instance.advance();
+        evt.preventDefault(); 
+      }
+    }
+
+    window.addEventListener("mousedown", checkKey);
+    window.addEventListener("keydown", checkKey);
+
+  
+    var instruction = new PIXI.Text("Click to continue...", {font: "14pt sans serif", fill: 0xFFFFFF});
+    instruction.x = APP_WIDTH - instruction.width - 10;
+    instruction.y = 80;
+    instance.addChild(instruction);
+  }
 
   instance.advance();
 }
 Dialogue.prototype = Object.create(PIXI.Container.prototype);
 Dialogue.prototype.constructor = Dialogue;
-Dialogue.showDialogue = function(json, doneCb) {
-  return new Dialogue(PIXI.loader.resources[json].data, doneCb);
+Dialogue.showDialogue = function(json, doneCb, timeout) {
+  return new Dialogue(PIXI.loader.resources[json].data, doneCb, timeout);
 }
 

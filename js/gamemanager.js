@@ -162,8 +162,8 @@ function GameManager() {
       if (dx == 0 && dy == 0) continue;
       
       var eX = ee.x * TILE_SIZE + TILE_SIZE/2, eY = ee.y * TILE_SIZE + TILE_SIZE/2;
-      var pX = [instance.playerX + instance.player.width/2, instance.playerX - instance.player.width/2];
-      var pY = [instance.playerY + instance.player.height/2, instance.playerY - instance.player.height/2];
+      var pX = [instance.playerX + instance.player.width/2 - 2, instance.playerX - instance.player.width/2 + 2];
+      var pY = [instance.playerY + instance.player.height/2 - 2, instance.playerY - instance.player.height/2 + 2];
       for (var i=0; i < pX.length; i++) for (var j=0; j < pY.length; j++) {
         if (dist2(eX, eY, pX[i], pY[j]) > ee.radius*ee.radius) continue;
         var t = Math.atan2(pY[j]-eY, pX[i]-eX) - ee.theta;
@@ -191,7 +191,7 @@ function GameManager() {
           instance.state["hasBeenCaught"] = true;
           instance.showDialogue(GameManager.dialogues[1], instance.loadMap.bind(instance, instance.state["level"]));
         } else {
-          setTimeout(instance.loadMap, 1000, instance.state["level"]);
+          instance.showDialogue(GameManager.dialogues[1], instance.loadMap.bind(instance, instance.state["level"]), 1000);
         }
       }
     } 
@@ -244,9 +244,9 @@ function GameManager() {
     instance.paused = false;
   }
 
-  this.showDialogue = function(dialogue, cb) {
+  this.showDialogue = function(dialogue, cb, timeout) {
     instance.paused = true;
-    instance.addChild(Dialogue.showDialogue(dialogue, cb || instance.resume));
+    instance.addChild(Dialogue.showDialogue(dialogue, cb || instance.resume, timeout));
   }
 
   this.updateEnemies = function() {
